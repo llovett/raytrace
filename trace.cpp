@@ -35,6 +35,8 @@ GLfloat GREEN[3] = {0.0, 1.0, 0.0};
 
 /* shapes in the scene */
 vector<Shape*> Shapes;
+/* lights in the scene */
+vector<lProps*> Lights;
 
 void init() {
     glClearColor(1.0, 1.0, 0.0, 0.0);  // yellow background
@@ -107,6 +109,7 @@ lProps *buildLight(GLfloat ared, GLfloat agreen, GLfloat ablue, GLfloat aalpha,
  * in the scene as well as building any lights.
  * */
 void buildScene() {
+    /* some objects */
     Sphere *s = new Sphere(0, 0, 0, 3);
     mProps *diffuseBlueMaterial = buildMaterial(
 	0.5, 1.0, 1.0, 1.0, /* color */
@@ -117,6 +120,20 @@ void buildScene() {
 	);
     s->setMaterial( diffuseBlueMaterial );
     Shapes.push_back( s );
+
+    /* some lights */
+    lProps *whiteLight = buildLight(
+	0.8, 0.8, 0.8, 1.0,	/* ambient color */
+	0.8, 0.8, 0.8, 1.0,	/* diffuse color */
+	0.8, 0.8, 0.8, 1.0 	/* specular color */
+	);
+    lProps *redLight = buildLight(
+	0.9, 0.2, 0.2, 1.0,	/* ambient color */
+	1.0, 0.0, 0.0, 0.0,	/* diffuse color */
+	1.0, 0.0, 0.0, 0.0 	/* specular color */
+	);
+    Lights.push_back( whiteLight );
+    Lights.push_back( redLight );
 }
 
 void display() {
