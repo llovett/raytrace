@@ -4,8 +4,8 @@
 
 int main() {
     Sphere *s = new Sphere(0, 0, 0, 5);
-    GLfloat point[3] = {0, 0, 0};
-    GLfloat direction[3] = {-2, 0, 0};
+    GLfloat point[3] = {10, 0, 0};
+    GLfloat direction[3] = {-1, 0, 0};
     ray r;
     r.point = point;
     r.direction = direction;
@@ -21,6 +21,8 @@ int main() {
     return 0;
 }
 
+void printVector(GLfloat*);
+
 intersection *Sphere::intersect(ray *r) const {
     GLfloat *P0 = r->point;
     GLfloat *v = r->direction;
@@ -31,10 +33,12 @@ intersection *Sphere::intersect(ray *r) const {
     GLfloat A[3] = { this->x - P0[0],
 		     this->y - P0[1],
 		     this->z - P0[2] };
+
     double vDotA = dot(v, A);
     double vSq = dot(v, v);
     double ASq = dot(A, A);
-    double sqrtQuantity = 4*vDotA - 4*vSq*(ASq - this->radius*this->radius);
+    double sqrtQuantity = 4*vDotA*vDotA - 4*vSq*(ASq - this->radius*this->radius);
+
     /* there is no intersection */
     if ( sqrtQuantity < 0 ) {
 	return NULL;
@@ -53,15 +57,15 @@ intersection *Sphere::intersect(ray *r) const {
     intersectPoint[0] = P0[0] + t*v[0];
     intersectPoint[1] = P0[1] + t*v[1];
     intersectPoint[2] = P0[2] + t*v[2];
-    GLfloat center[3] = { this->x, this->y, this->z };
 
     /* calculate the normal at the point of intersection */
+    GLfloat center[3] = { this->x, this->y, this->z };
     GLfloat nMagnitude = dist(intersectPoint, center);
-    
+    std::cout<<"normal magnitude: "<<nMagnitude<<std::endl;
     GLfloat *normal = new GLfloat[3];
-    normal[0] = this->x - P0[0];
-    normal[1] = this->y - P0[1];
-    normal[2] = this->z - P0[2];
+    normal[0] = this->x - intersectPoint[0];
+    normal[1] = this->y - intersectPoint[1];
+    normal[2] = this->z - intersectPoint[2];
     for ( int i=0; i<3; i++ ) {
 	normal[i] /= nMagnitude;
     }
@@ -72,4 +76,13 @@ intersection *Sphere::intersect(ray *r) const {
     i->normal = normal;
     i->objectNumber = -1;
     return i;
+}
+
+void printVector(GLfloat *v) {
+    int size = 3;
+    std::cout << "( ";
+    for ( int i=0; i<size; i++ ) {
+	std::cout << v[i] << " ";
+    }
+    std::cout << ")" <<std::endl;
 }
