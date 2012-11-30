@@ -34,7 +34,7 @@ GLfloat BLUE[3] = {0.0, 0.0, 1.0};
 GLfloat GREEN[3] = {0.0, 1.0, 0.0};
 
 /* shapes in the scene (currently just 1) */
-Shape *Shapes[] = { new Sphere(0, 0, 0, 3) };
+vector<Shape*> Shapes;
 
 void init() {
     glClearColor(1.0, 1.0, 0.0, 0.0);  // yellow background
@@ -50,6 +50,42 @@ void reshape(int w, int h) {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glViewport(0, 0, w, h);
+}
+
+mProps *buildMaterial(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha,
+		      GLfloat ambient, GLfloat diffuse, GLfloat specular,
+		      GLfloat shininess) {
+    mProps *props = new mProps();
+    GLfloat *color = new GLfloat[4];
+    color[0] = red;
+    color[1] = green;
+    color[2] = blue;
+    color[4] = alpha;
+    props->ambient = ambient;
+    props->diffuse = diffuse;
+    props->specular = specular;
+    props->shininess = shininess;
+    props->color = color;
+
+    return props;
+}
+
+/**
+ * buildScene()
+ *
+ * Constructs all of the objects and materials that will be rendered
+ * in the scene as well as building any lights.
+ * */
+void buildScene() {
+    Sphere *s = new Sphere(0, 0, 0, 3);
+    mProps *diffuseBlueMaterial = buildMaterial(
+	0.5, 1.0, 1.0, 1.0, /* color */
+	0.5, 	/* ambient */
+	0.5, 	/* diffuse */
+	0.1, 	/* specular */
+	0.1	/* shininess */
+	);
+    Shapes.push_back( s );
 }
 
 void display() {

@@ -1,4 +1,5 @@
 #include "Shape.h"
+#include <algorithm>
 #include <math.h>
 
 GLfloat Shape::dot(GLfloat *d1, GLfloat *d2) const {
@@ -11,6 +12,47 @@ void Shape::normalize(GLfloat *d) const {
     for ( int i=0; i<3; i++ ) {
 	d[i] /= magnitude;
     }
+}
+
+void Shape::setMaterial(mProps *mat) {
+    this->material = mat;
+}
+
+GLfloat *Shape::getColor() const {
+    if ( this->material ) {
+	GLfloat *color = new GLfloat[4];
+	std::copy(this->material->color, this->material->color+4, color);
+	return color;
+    }
+    return NULL;
+}
+
+GLfloat Shape::getAmbient() const {
+    if ( this->material ) {
+	return this->material->ambient;
+    }
+    return 0.0f;
+}
+
+GLfloat Shape::getDiffuse() const {
+    if ( this->material ) {
+	return this->material->diffuse;
+    }
+    return 0.0f;
+}
+
+GLfloat Shape::getSpecular() const {
+    if ( this->material ) {
+	return this->material->specular;
+    }
+    return 0.0f;
+}
+
+GLfloat Shape::getShininess() const {
+    if ( this->material ) {
+	return this->material->shininess;
+    }
+    return 0.0f;
 }
 
 GLfloat dist(GLfloat *d1, GLfloat *d2) {
