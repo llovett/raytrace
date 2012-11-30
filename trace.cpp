@@ -54,7 +54,8 @@ void reshape(int w, int h) {
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
-    glRasterPos2i(300-M/2, 300-N/2);  // position of the lower left corner
+    glRasterPos2i(300-M/2, 300-N/2);  
+    // position of the lower left corner
     // of the bitmap in window coords
 
     glDrawPixels(M, N, GL_RGB, GL_FLOAT, image);  
@@ -115,7 +116,7 @@ struct intersection *Intersect( struct ray *r ) {
 GLfloat *Trace(struct ray *r, int level, float weight) {
     // This returns the color of the ray
     struct intersection *p;
-    GLfloat *color = (GLfloat*)malloc(3*sizeof(GLfloat));
+    GLfloat *color = new GLfloat[3];
     p = Intersect(r);
     if (p != NULL) {
 	if (p->point[1] < 0)
