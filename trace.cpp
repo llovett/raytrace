@@ -7,6 +7,8 @@
 
 #include <GL/glut.h>
 #include <algorithm>
+#include <vector>
+#include <iostream>
 #include "trace.h"
 #include "Sphere.h"
 #include "Shape.h"
@@ -72,6 +74,7 @@ void makeRay(int i, int j, ray *r) {
     int k;
 
     copy(ViewerPosition, ViewerPosition+3, r->point);
+
     pixel[0] = GridX;
     pixel[1] = GridY + (GridWidth*j)/M;
     pixel[2] = GridZ - (GridHeight*i)/N;
@@ -82,13 +85,28 @@ void makeRay(int i, int j, ray *r) {
 }
 
 intersection *intersect( ray *r ) {
+    vector<intersection*> intersections;
+
+    /* intersect ray with every shape in scene */
     for ( int i=0; i<sizeof(Shapes)/sizeof(Shape); i++ ) {
 	Shape *s = Shapes[i];
-	intersection *i = s->intersect(r);
-	if ( i ) {
-	    /* there was an intersection */
+	intersection *x = s->intersect(r);
+	if ( x ) {
+	    x->shapeNumber = i;
+	    intersections.push_back(x);
 	}
     }
+    
+    /* find the closest intersection */
+    intersection *closest = NULL;
+    for ( int i=0; i<intersections.size(); i++ ) {
+	intersection *x = intersections[i];
+	if ( !closest || dist(x->point, r->point) < dist(closest->point, r->point) ) {
+	    closest = x;
+	}
+    }
+
+    return closest;
 }
 
 // intersection *Intersect( ray *r ) {
@@ -136,12 +154,14 @@ void makePicture() {
     // This runs through the pixel grid, makes a ray from the
     // viewer through the pixel, and traces this ray.
     // The pixel gets the color returned by the trace.
-    ray r;
     int i, j;
     GLfloat *color;
 
     for (i =0; i < N; i++) {
 	for (j = 0; j < M; j++ ) {
+	    ray r;
+	    r.point = new GLfloat[3];
+	    r.direction = new GLfloat[3];
 	    makeRay(i, j, &r);
 	    color = trace(&r, 0, 1.0);
 	    copy(color, color+3, image[i][j]);
