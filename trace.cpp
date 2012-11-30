@@ -1,10 +1,5 @@
 /*     trace.cpp  */
 
-/* This is a simple non-recursive "ray tracer" */
-/* The only object in the scene is a rectangle with */
-/* x=0, -2<=y<2, 0<=z<=4.  */
-
-
 #include <GL/glut.h>
 #include <algorithm>
 #include <vector>
@@ -13,21 +8,27 @@
 #include "Sphere.h"
 #include "Shape.h"
 
-// N is the height of the bitmap; M is its width
+/* N is the height of the bitmap; M is its width */
 #define N 200
 #define M 400
+/* How deep we should be ray-tracing */
 #define RECURSIVE_DEPTH 3
 
 using namespace std;
 
+/* Position of the viewer in word coords */
 GLfloat ViewerPosition[3] = {15.0, 0.0, 2.0};
-GLfloat GridX = 10, GridY = -2, GridZ = 3; // Upper left corner pixel grid
+/* Upper left corner pixel grid */
+GLfloat GridX = 10, GridY = -2, GridZ = 3;
+/* dimensions of the pixel grid. */
+GLfloat GridWidth = 4, GridHeight = 2;  
+/* dimensions of the polygon with one vertex at the origin */
+GLfloat PolyWidth = 4, PolyHeight = 4;
 
-GLfloat GridWidth = 4, GridHeight = 2;  // dimensions of the pixel grid.
+/* the bitmap */
+GLfloat image[N][M][3];
 
-GLfloat PolyWidth = 4, PolyHeight = 4;  // Dimensions of a polygon with one
-                                        // vertex at the orign
-GLfloat image[N][M][3];			// This is the image bitmap
+/* primary colors for convenience */
 GLfloat RED[3] = {1.0, 0.0, 0.0};
 GLfloat BLUE[3] = {0.0, 0.0, 1.0};
 GLfloat GREEN[3] = {0.0, 1.0, 0.0};
