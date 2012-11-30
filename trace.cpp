@@ -52,7 +52,6 @@ void reshape(int w, int h) {
     glViewport(0, 0, w, h);
 }
 
-
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
     glRasterPos2i(300-M/2, 300-N/2);
@@ -148,8 +147,6 @@ GLfloat *trace(ray *r, int level, float weight) {
 	copy(BLUE, BLUE+3, color);
     return color;
 }
-
-
 
 void makePicture() {
     // This runs through the pixel grid, makes a ray from the
