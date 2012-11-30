@@ -33,7 +33,7 @@ GLfloat RED[3] = {1.0, 0.0, 0.0};
 GLfloat BLUE[3] = {0.0, 0.0, 1.0};
 GLfloat GREEN[3] = {0.0, 1.0, 0.0};
 
-/* shapes in the scene (currently just 1) */
+/* shapes in the scene */
 vector<Shape*> Shapes;
 
 void init() {
@@ -85,6 +85,7 @@ void buildScene() {
 	0.1, 	/* specular */
 	0.1	/* shininess */
 	);
+    s->setMaterial( diffuseBlueMaterial );
     Shapes.push_back( s );
 }
 
@@ -124,7 +125,7 @@ intersection *intersect( ray *r ) {
     vector<intersection*> intersections;
 
     /* intersect ray with every shape in scene */
-    for ( int i=0; i<sizeof(Shapes)/sizeof(Shape); i++ ) {
+    for ( int i=0; i<Shapes.size(); i++ ) {
 	Shape *s = Shapes[i];
 	intersection *x = s->intersect(r);
 	if ( x ) {
@@ -204,6 +205,7 @@ void makePicture() {
 }
 
 int main(int argc, char** argv) {
+    buildScene();
     makePicture();
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
