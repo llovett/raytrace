@@ -6,21 +6,14 @@
 
 
 #include <GL/glut.h>
+#include "trace.h"
+#include "Sphere.h"
+#include "Shape.h"
 
 // N is the height of the bitmap; M is its width
 #define N 200 
 #define M 400 
-
-struct ray {
-    GLfloat point[3];
-    GLfloat direction[3];
-};
-
-struct intersection {
-    GLfloat point[3];
-    GLfloat normal[3];
-    int objectNumber;
-};
+#define RECURSIVE_DEPTH 3
 
 GLfloat ViewerPosition[3] = {15.0, 0.0, 2.0};
 GLfloat GridX = 10, GridY = -2, GridZ = 3; // Upper left corner pixel grid 
@@ -34,6 +27,8 @@ GLfloat RED[3] = {1.0, 0.0, 0.0};
 GLfloat BLUE[3] = {0.0, 0.0, 1.0};
 GLfloat GREEN[3] = {0.0, 1.0, 0.0};
 
+/* shapes in the scene (currently just 1) */
+Shape *shapes[] = { new Sphere(0, 0, 0, 3) };
 
 void init() {
     glClearColor(1.0, 1.0, 0.0, 0.0);  // yellow background
@@ -74,7 +69,7 @@ void copy3(GLfloat *x, GLfloat *y) {
     }
 }
 
-void MakeRay(int i, int j, struct ray *r) {
+void MakeRay(int i, int j, ray *r) {
     // This makes the ray from the viewer through pixel (i,j)
     GLfloat direction[3];
     GLfloat pixel[3]; // The world coordinates of the (i, j) pixel
@@ -90,12 +85,12 @@ void MakeRay(int i, int j, struct ray *r) {
     copy3(r->direction, direction);
 }
 
-struct intersection *Intersect( struct ray *r ) {
+intersection *Intersect( ray *r ) {
     // This returns a non-null value if the ray intersects 
     // our polygon in the y-z plane
     // Your Intersect( ) method will be more complex.
 
-    struct intersection *data;
+    intersection *data;
 
     GLfloat t = -(r->point[0]/r->direction[0]);
     // t is the t-value corresponding to x=0.
@@ -103,7 +98,7 @@ struct intersection *Intersect( struct ray *r ) {
     GLfloat y = r->point[1] + t*r->direction[1];
     GLfloat z = r->point[2] + t*r->direction[2];
     if ( (-PolyWidth/2 <= y) && (y <= PolyWidth/2) && (0 <= z) && (z <= PolyHeight)) {
-	data = (intersection*)malloc( sizeof(struct intersection) );
+	data = (intersection*)malloc( sizeof(intersection) );
 	data->point[0] = x;
 	data->point[1] = y;
 	data->point[2] = z;
@@ -113,9 +108,9 @@ struct intersection *Intersect( struct ray *r ) {
 	return NULL;
 }
 
-GLfloat *Trace(struct ray *r, int level, float weight) {
+GLfloat *Trace(ray *r, int level, float weight) {
     // This returns the color of the ray
-    struct intersection *p;
+    intersection *p;
     GLfloat *color = new GLfloat[3];
     p = Intersect(r);
     if (p != NULL) {
@@ -135,7 +130,7 @@ void MakePicture() {
     // This runs through the pixel grid, makes a ray from the
     // viewer through the pixel, and traces this ray.
     // The pixel gets the color returned by the trace.
-    struct ray r;
+    ray r;
     int i, j;
     GLfloat *color;
 
