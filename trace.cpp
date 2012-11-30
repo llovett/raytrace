@@ -162,7 +162,7 @@ void makePicture() {
 	    r.direction = new GLfloat[3];
 	    makeRay(i, j, &r);
 	    color = trace(&r, 0, 1.0);
-	    copy(color, color+3, image[i][j]);
+	    copy(color, color+3, image[N-i-1][j]);
 	}
     }
 }
@@ -179,5 +179,3 @@ int main(int argc, char** argv) {
     init();
     glutMainLoop();
 }
-
-
