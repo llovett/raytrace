@@ -2,26 +2,33 @@
 #include <iostream>
 #include <math.h>
 
-int main() {
-    Sphere *s = new Sphere(0, 0, 0, 5);
-    GLfloat point[3] = {10, 10, 0};
-    GLfloat direction[3] = {-9,-10,0};
-    ray r;
-    r.point = point;
-    r.direction = direction;
+// int main() {
+//     Sphere *s = new Sphere(0, 0, 0, 5);
+//     GLfloat point[3] = {10, 10, 0};
+//     GLfloat direction[3] = {-9,-10,0};
+//     ray r;
+//     r.point = point;
+//     r.direction = direction;
 
-    intersection *i = s->intersect(&r);
-    if ( i ) {
-	std::cout << "Intersection at ("<<i->point[0]<<","<<i->point[1]<<","<<i->point[2]<<")"<<std::endl;
-	std::cout << "Normal at intersection is ("<<i->normal[0]<<","<<i->normal[1]<<","<<i->normal[2]<<")"<<std::endl;
-    } else {
-	std::cout << "No intersection." << std::endl;
-    }
+//     intersection *i = s->intersect(&r);
+//     if ( i ) {
+// 	std::cout << "Intersection at ("<<i->point[0]<<","<<i->point[1]<<","<<i->point[2]<<")"<<std::endl;
+// 	std::cout << "Normal at intersection is ("<<i->normal[0]<<","<<i->normal[1]<<","<<i->normal[2]<<")"<<std::endl;
+//     } else {
+// 	std::cout << "No intersection." << std::endl;
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
 
-void printVector(GLfloat*);
+// void printVector(GLfloat *v) {
+//     int size = 3;
+//     std::cout << "( ";
+//     for ( int i=0; i<size; i++ ) {
+// 	std::cout << v[i] << " ";
+//     }
+//     std::cout << ")" <<std::endl;
+// }
 
 intersection *Sphere::intersect(ray *r) const {
     GLfloat *P0 = r->point;
@@ -65,20 +72,11 @@ intersection *Sphere::intersect(ray *r) const {
     normal[1] = this->y - intersectPoint[1];
     normal[2] = this->z - intersectPoint[2];
     normalize(normal);
-
-    /* TODO: figure out what to do with the "objectNumber" field */
+    
+    /* create intersection object out of normal and intersection point */
     intersection *i = new intersection();
     i->point = intersectPoint;
     i->normal = normal;
-    i->objectNumber = -1;
     return i;
 }
 
-void printVector(GLfloat *v) {
-    int size = 3;
-    std::cout << "( ";
-    for ( int i=0; i<size; i++ ) {
-	std::cout << v[i] << " ";
-    }
-    std::cout << ")" <<std::endl;
-}

@@ -13,7 +13,6 @@ typedef struct {
     /* point and normal have three dimensions */
     GLfloat *point;
     GLfloat *normal;
-    int objectNumber;
 } intersection;
 
 #endif

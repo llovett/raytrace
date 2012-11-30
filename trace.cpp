@@ -6,19 +6,22 @@
 
 
 #include <GL/glut.h>
+#include <algorithm>
 #include "trace.h"
 #include "Sphere.h"
 #include "Shape.h"
 
 // N is the height of the bitmap; M is its width
-#define N 200 
-#define M 400 
+#define N 200
+#define M 400
 #define RECURSIVE_DEPTH 3
 
+using namespace std;
+
 GLfloat ViewerPosition[3] = {15.0, 0.0, 2.0};
-GLfloat GridX = 10, GridY = -2, GridZ = 3; // Upper left corner pixel grid 
-                                          
-GLfloat GridWidth = 4, GridHeight = 2;  // dimensions of the pixel grid. 
+GLfloat GridX = 10, GridY = -2, GridZ = 3; // Upper left corner pixel grid
+
+GLfloat GridWidth = 4, GridHeight = 2;  // dimensions of the pixel grid.
 
 GLfloat PolyWidth = 4, PolyHeight = 4;  // Dimensions of a polygon with one
                                         // vertex at the orign
@@ -28,7 +31,7 @@ GLfloat BLUE[3] = {0.0, 0.0, 1.0};
 GLfloat GREEN[3] = {0.0, 1.0, 0.0};
 
 /* shapes in the scene (currently just 1) */
-Shape *shapes[] = { new Sphere(0, 0, 0, 3) };
+Shape *Shapes[] = { new Sphere(0, 0, 0, 3) };
 
 void init() {
     glClearColor(1.0, 1.0, 0.0, 0.0);  // yellow background
@@ -49,84 +52,87 @@ void reshape(int w, int h) {
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
-    glRasterPos2i(300-M/2, 300-N/2);  
+    glRasterPos2i(300-M/2, 300-N/2);
     // position of the lower left corner
     // of the bitmap in window coords
 
-    glDrawPixels(M, N, GL_RGB, GL_FLOAT, image);  
-    // draws rows 0 to N, cols 0 to M of the bitmap "image".  
-    // The bitmap is created below in makeBitmap(), which is 
+    glDrawPixels(M, N, GL_RGB, GL_FLOAT, image);
+    // draws rows 0 to N, cols 0 to M of the bitmap "image".
+    // The bitmap is created below in makeBitmap(), which is
     // the first function called in the program.
 
     glFlush();
 }
 
-void copy3(GLfloat *x, GLfloat *y) {
-    /* sets x = y */
-    int i;
-    for (i = 0; i < 3; i++) {
-	x[i] = y[i];
-    }
-}
-
-void MakeRay(int i, int j, ray *r) {
+void makeRay(int i, int j, ray *r) {
     // This makes the ray from the viewer through pixel (i,j)
     GLfloat direction[3];
-    GLfloat pixel[3]; // The world coordinates of the (i, j) pixel
+    // The world coordinates of the (i, j) pixel
+    GLfloat pixel[3];
     int k;
 
-    copy3(r->point, ViewerPosition);
+    copy(ViewerPosition, ViewerPosition+3, r->point);
     pixel[0] = GridX;
     pixel[1] = GridY + (GridWidth*j)/M;
     pixel[2] = GridZ - (GridHeight*i)/N;
     for (k = 0; k < 3; k++ ) {
 	direction[k] = pixel[k] - r->point[k];
     }
-    copy3(r->direction, direction);
+    copy(direction, direction+3, r->direction);
 }
 
-intersection *Intersect( ray *r ) {
-    // This returns a non-null value if the ray intersects 
-    // our polygon in the y-z plane
-    // Your Intersect( ) method will be more complex.
-
-    intersection *data;
-
-    GLfloat t = -(r->point[0]/r->direction[0]);
-    // t is the t-value corresponding to x=0.
-    GLfloat x = 0;
-    GLfloat y = r->point[1] + t*r->direction[1];
-    GLfloat z = r->point[2] + t*r->direction[2];
-    if ( (-PolyWidth/2 <= y) && (y <= PolyWidth/2) && (0 <= z) && (z <= PolyHeight)) {
-	data = (intersection*)malloc( sizeof(intersection) );
-	data->point[0] = x;
-	data->point[1] = y;
-	data->point[2] = z;
-	return data;
+intersection *intersect( ray *r ) {
+    for ( int i=0; i<sizeof(Shapes)/sizeof(Shape); i++ ) {
+	Shape *s = Shapes[i];
+	intersection *i = s->intersect(r);
+	if ( i ) {
+	    /* there was an intersection */
+	}
     }
-    else
-	return NULL;
 }
 
-GLfloat *Trace(ray *r, int level, float weight) {
+// intersection *Intersect( ray *r ) {
+//     // This returns a non-null value if the ray intersects
+//     // our polygon in the y-z plane
+//     // Your Intersect( ) method will be more complex.
+
+//     intersection *data;
+
+//     GLfloat t = -(r->point[0]/r->direction[0]);
+//     // t is the t-value corresponding to x=0.
+//     GLfloat x = 0;
+//     GLfloat y = r->point[1] + t*r->direction[1];
+//     GLfloat z = r->point[2] + t*r->direction[2];
+//     if ( (-PolyWidth/2 <= y) && (y <= PolyWidth/2) && (0 <= z) && (z <= PolyHeight)) {
+// 	data = (intersection*)malloc( sizeof(intersection) );
+// 	data->point[0] = x;
+// 	data->point[1] = y;
+// 	data->point[2] = z;
+// 	return data;
+//     }
+//     else
+// 	return NULL;
+// }
+
+GLfloat *trace(ray *r, int level, float weight) {
     // This returns the color of the ray
     intersection *p;
     GLfloat *color = new GLfloat[3];
-    p = Intersect(r);
+    p = intersect(r);
     if (p != NULL) {
 	if (p->point[1] < 0)
-	    copy3(color, RED);
+	    copy(RED, RED+3, color);
 	else
-	    copy3(color, GREEN);
+	    copy(GREEN, GREEN+3, color);
     }
     else
-	copy3(color, BLUE);
+	copy(BLUE, BLUE+3, color);
     return color;
 }
 
 
-  
-void MakePicture() {  
+
+void makePicture() {
     // This runs through the pixel grid, makes a ray from the
     // viewer through the pixel, and traces this ray.
     // The pixel gets the color returned by the trace.
@@ -136,15 +142,15 @@ void MakePicture() {
 
     for (i =0; i < N; i++) {
 	for (j = 0; j < M; j++ ) {
-	    MakeRay(i, j, &r);
-	    color = Trace(&r, 0, 1.0);
-	    copy3(image[i][j], color);
+	    makeRay(i, j, &r);
+	    color = trace(&r, 0, 1.0);
+	    copy(color, color+3, image[i][j]);
 	}
     }
 }
 
 int main(int argc, char** argv) {
-    MakePicture();
+    makePicture();
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
     glutInitWindowSize(600, 600);
