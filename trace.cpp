@@ -70,6 +70,36 @@ mProps *buildMaterial(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha,
     return props;
 }
 
+lProps *buildLight(GLfloat ared, GLfloat agreen, GLfloat ablue, GLfloat aalpha,
+		   GLfloat dred, GLfloat dgreen, GLfloat dblue, GLfloat dalpha,
+		   GLfloat sred, GLfloat sgreen, GLfloat sblue, GLfloat salpha) {
+    lProps *props = new lProps();
+    GLfloat *ambient = new GLfloat[4];
+    GLfloat *diffuse = new GLfloat[4];
+    GLfloat *specular = new GLfloat[4];
+
+    ambient[0] = ared;
+    ambient[1] = agreen;
+    ambient[2] = ablue;
+    ambient[4] = aalpha;
+
+    diffuse[0] = dred;
+    diffuse[1] = dgreen;
+    diffuse[2] = dblue;
+    diffuse[4] = dalpha;
+
+    specular[0] = sred;
+    specular[1] = sgreen;
+    specular[2] = sblue;
+    specular[4] = salpha;
+
+    props->ambient = ambient;
+    props->diffuse = diffuse;
+    props->specular = specular;
+
+    return props;
+}
+
 /**
  * buildScene()
  *
