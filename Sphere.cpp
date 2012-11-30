@@ -4,8 +4,8 @@
 
 int main() {
     Sphere *s = new Sphere(0, 0, 0, 5);
-    GLfloat point[3] = {10, 0, 0};
-    GLfloat direction[3] = {-1, 0, 0};
+    GLfloat point[3] = {10, 10, 0};
+    GLfloat direction[3] = {-9,-10,0};
     ray r;
     r.point = point;
     r.direction = direction;
@@ -26,6 +26,7 @@ void printVector(GLfloat*);
 intersection *Sphere::intersect(ray *r) const {
     GLfloat *P0 = r->point;
     GLfloat *v = r->direction;
+    normalize(v);
 
     /* set up the equation to find the intersection
      * (see p. 18 of "VectorGeometry.pdf")
@@ -59,16 +60,11 @@ intersection *Sphere::intersect(ray *r) const {
     intersectPoint[2] = P0[2] + t*v[2];
 
     /* calculate the normal at the point of intersection */
-    GLfloat center[3] = { this->x, this->y, this->z };
-    GLfloat nMagnitude = dist(intersectPoint, center);
-    std::cout<<"normal magnitude: "<<nMagnitude<<std::endl;
     GLfloat *normal = new GLfloat[3];
     normal[0] = this->x - intersectPoint[0];
     normal[1] = this->y - intersectPoint[1];
     normal[2] = this->z - intersectPoint[2];
-    for ( int i=0; i<3; i++ ) {
-	normal[i] /= nMagnitude;
-    }
+    normalize(normal);
 
     /* TODO: figure out what to do with the "objectNumber" field */
     intersection *i = new intersection();

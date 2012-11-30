@@ -11,6 +11,7 @@ public:
 protected:
     GLfloat dist(GLfloat*, GLfloat*) const;
     GLfloat dot(GLfloat*, GLfloat*) const;
+    void normalize(GLfloat *) const;
 };
 
 #endif
