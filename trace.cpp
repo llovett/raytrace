@@ -193,29 +193,6 @@ intersection *intersect( ray *r ) {
     return closest;
 }
 
-// intersection *Intersect( ray *r ) {
-//     // This returns a non-null value if the ray intersects
-//     // our polygon in the y-z plane
-//     // Your Intersect( ) method will be more complex.
-
-//     intersection *data;
-
-//     GLfloat t = -(r->point[0]/r->direction[0]);
-//     // t is the t-value corresponding to x=0.
-//     GLfloat x = 0;
-//     GLfloat y = r->point[1] + t*r->direction[1];
-//     GLfloat z = r->point[2] + t*r->direction[2];
-//     if ( (-PolyWidth/2 <= y) && (y <= PolyWidth/2) && (0 <= z) && (z <= PolyHeight)) {
-// 	data = (intersection*)malloc( sizeof(intersection) );
-// 	data->point[0] = x;
-// 	data->point[1] = y;
-// 	data->point[2] = z;
-// 	return data;
-//     }
-//     else
-// 	return NULL;
-// }
-
 GLfloat *trace(ray *r, int level, float weight) {
     // This returns the color of the ray
     intersection *p;
