@@ -20,6 +20,7 @@ trace: trace.cpp trace.h box sphere
 test: Sphere.h Sphere.cpp shape
 	$(CPP) Sphere.cpp Shape.o $(FLAGS) $(LIBS)
 	./a.out
+	@rm -f a.out
 
 clean:
 	@rm -rf $(APPS)
