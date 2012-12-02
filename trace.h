@@ -26,7 +26,7 @@ typedef struct {
     GLfloat *color;
     /* how much ambient, diffuse, and specular light are
      * reflected by this surface, respectively */
-    GLfloat ambient, diffuse, specular;
+    GLfloat *ambient, *diffuse, *specular;
     /* shininess- how focused the reflection is, not how bright! */
     GLfloat shininess;
 } mProps;

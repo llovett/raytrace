@@ -9,9 +9,9 @@ public:
     virtual intersection *intersect(ray *) const = 0;
     mProps *material;
     void setMaterial(mProps *mat);
-    GLfloat getAmbient() const;
-    GLfloat getDiffuse() const;
-    GLfloat getSpecular() const;
+    GLfloat *getAmbient() const;
+    GLfloat *getDiffuse() const;
+    GLfloat *getSpecular() const;
     GLfloat getShininess() const;
     GLfloat *getColor() const;
 

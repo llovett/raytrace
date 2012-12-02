@@ -12,7 +12,9 @@
 #define N 200
 #define M 400
 /* How deep we should be ray-tracing */
-#define RECURSIVE_DEPTH 3
+#define MAX_DEPTH 3
+/* Minimum reflection constant needed to calculate a ray-trace for light */
+#define MIN_WEIGHT 0.01
 
 using namespace std;
 
@@ -29,9 +31,10 @@ GLfloat PolyWidth = 4, PolyHeight = 4;
 GLfloat image[N][M][3];
 
 /* primary colors for convenience */
-GLfloat RED[3] = {1.0, 0.0, 0.0};
-GLfloat BLUE[3] = {0.0, 0.0, 1.0};
-GLfloat GREEN[3] = {0.0, 1.0, 0.0};
+GLfloat RED[4] = {1.0, 0.0, 0.0, 1.0};
+GLfloat BLUE[4] = {0.0, 0.0, 1.0, 1.0};
+GLfloat GREEN[4] = {0.0, 1.0, 0.0, 1.0};
+GLfloat BACKGROUND[4] = {1.0, 1.0, 1.0, 1.0};
 
 /* shapes in the scene */
 vector<Shape*> Shapes;
@@ -54,20 +57,31 @@ void reshape(int w, int h) {
     glViewport(0, 0, w, h);
 }
 
-mProps *buildMaterial(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha,
-		      GLfloat ambient, GLfloat diffuse, GLfloat specular,
+mProps *buildMaterial(GLfloat color[4],
+		      GLfloat ambient[3],
+		      GLfloat diffuse[3],
+		      GLfloat specular[3],
 		      GLfloat shininess) {
     mProps *props = new mProps();
-    GLfloat *color = new GLfloat[4];
-    color[0] = red;
-    color[1] = green;
-    color[2] = blue;
-    color[4] = alpha;
-    props->ambient = ambient;
-    props->diffuse = diffuse;
-    props->specular = specular;
+
+    GLfloat *myColor = new GLfloat[4];
+    for ( int i=0; i<4; i++ ) {
+	myColor[i] = color[i];
+    }
+    GLfloat *myAmbient = new GLfloat[3];
+    GLfloat *myDiffuse = new GLfloat[3];
+    GLfloat *mySpecular = new GLfloat[3];
+    for ( int i = 0; i < 3; ++i ) {
+	myAmbient[i] = ambient[i];
+	myDiffuse[i] = diffuse[i];
+	mySpecular[i] = specular[i];
+    }
+
+    props->ambient = myAmbient;
+    props->diffuse = myDiffuse;
+    props->specular = mySpecular;
     props->shininess = shininess;
-    props->color = color;
+    props->color = myColor;
 
     return props;
 }
@@ -110,15 +124,15 @@ lProps *buildLight(GLfloat ared, GLfloat agreen, GLfloat ablue, GLfloat aalpha,
  * */
 void buildScene() {
     /* some objects */
+
     Sphere *s = new Sphere(0, 0, 0, 3);
-    mProps *diffuseBlueMaterial = buildMaterial(
-	0.5, 1.0, 1.0, 1.0, /* color */
-	0.5, 	/* ambient */
-	0.5, 	/* diffuse */
-	0.1, 	/* specular */
-	0.1	/* shininess */
-	);
+    GLfloat color[4] = { 0.5, 1.0, 1.0, 1.0 };
+    GLfloat ambient[3] = { 0.0, 0.3, 0.6 };
+    GLfloat diffuse[3] = { 0.2, 0.2, 0.7 };
+    GLfloat specular[3] = { 0.2, 0.2, 0.4 };
+    mProps *diffuseBlueMaterial = buildMaterial(color, ambient, diffuse, specular, 5);
     s->setMaterial( diffuseBlueMaterial );
+
     Shapes.push_back( s );
 
     /* some lights */
@@ -128,7 +142,7 @@ void buildScene() {
 	0.8, 0.8, 0.8, 1.0 	/* specular color */
 	);
     lProps *redLight = buildLight(
-	0.9, 0.2, 0.2, 1.0,	/* ambient color */
+	0.9, 0.2, 0.1, 1.0,	/* ambient color */
 	1.0, 0.0, 0.0, 0.0,	/* diffuse color */
 	1.0, 0.0, 0.0, 0.0 	/* specular color */
 	);
@@ -196,16 +210,45 @@ intersection *intersect( ray *r ) {
 GLfloat *trace(ray *r, int level, float weight) {
     // This returns the color of the ray
     intersection *p;
-    GLfloat *color = new GLfloat[3];
+    GLfloat *color = new GLfloat[4];
+
+    // Base case
+    if ( level > MAX_DEPTH || weight < MIN_WEIGHT ) {
+	copy(BACKGROUND, BACKGROUND+4, color);
+	return color;
+    }
+
     p = intersect(r);
     if (p != NULL) {
-	if (p->point[1] < 0)
-	    copy(RED, RED+3, color);
-	else
-	    copy(GREEN, GREEN+3, color);
+	Shape *theShape = Shapes[p->shapeNumber];
+
+	/***********************/
+	/* AMBIENT CALCULATION */
+	/***********************/
+	GLfloat *shapeColor = theShape->getColor();
+	GLfloat *Ka = theShape->getAmbient();
+	GLfloat ambientColor[3] = {
+	    Ka[0] * shapeColor[0],
+	    Ka[1] * shapeColor[1],
+	    Ka[2] * shapeColor[2]
+	};
+	/* Find net ambient light from all light sources */
+	GLfloat ambientLightsNet[3] = { 0.0, 0.0, 0.0 };
+	for ( int i=0; i<Lights.size(); i++ ) {
+	    lProps *light = Lights[i];
+	    ambientLightsNet[0] += ambientColor[0] * light->ambient[0];
+	    ambientLightsNet[1] += ambientColor[1] * light->ambient[1];
+	    ambientLightsNet[2] += ambientColor[2] * light->ambient[2];
+	}
+	copy(ambientLightsNet, ambientLightsNet+3, color);
+	color[3] = 1.0;
+	// if (p->point[1] < 0)
+	//     copy(RED, RED+4, color);
+	// else
+	//     copy(GREEN, GREEN+4, color);
     }
     else
-	copy(BLUE, BLUE+3, color);
+	copy(BLUE, BLUE+4, color);
     return color;
 }
 

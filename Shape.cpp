@@ -27,25 +27,25 @@ GLfloat *Shape::getColor() const {
     return NULL;
 }
 
-GLfloat Shape::getAmbient() const {
+GLfloat *Shape::getAmbient() const {
     if ( this->material ) {
 	return this->material->ambient;
     }
-    return 0.0f;
+    return NULL;
 }
 
-GLfloat Shape::getDiffuse() const {
+GLfloat *Shape::getDiffuse() const {
     if ( this->material ) {
 	return this->material->diffuse;
     }
-    return 0.0f;
+    return NULL;
 }
 
-GLfloat Shape::getSpecular() const {
+GLfloat *Shape::getSpecular() const {
     if ( this->material ) {
 	return this->material->specular;
     }
-    return 0.0f;
+    return NULL;
 }
 
 GLfloat Shape::getShininess() const {
