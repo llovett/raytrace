@@ -15,6 +15,8 @@ typedef struct {
     /* point and normal have three dimensions */
     GLfloat *point;
     GLfloat *normal;
+    /* value of t for which given ray in intersect() method will hit the shape */
+    GLfloat t;
 
     /* shapeNumber = index into Shapes[] array of shape that is intersected. */
     int shapeNumber;

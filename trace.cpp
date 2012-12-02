@@ -199,7 +199,7 @@ intersection *intersect( ray *r ) {
     intersection *closest = NULL;
     for ( int i=0; i<intersections.size(); i++ ) {
 	intersection *x = intersections[i];
-	if ( !closest || dist(x->point, r->point) < dist(closest->point, r->point) ) {
+	if ( !closest || x->t < closest->t ) {
 	    closest = x;
 	}
     }

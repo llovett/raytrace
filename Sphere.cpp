@@ -77,6 +77,7 @@ intersection *Sphere::intersect(ray *r) const {
     intersection *i = new intersection();
     i->point = intersectPoint;
     i->normal = normal;
+    i->t = t;
     return i;
 }
 
