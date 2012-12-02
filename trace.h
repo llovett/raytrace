@@ -40,6 +40,9 @@ typedef struct {
     GLfloat *ambient;
     GLfloat *diffuse;
     GLfloat *specular;
+
+    /* position in space */
+    GLfloat x, y, z;
 } lProps;
 
 #endif

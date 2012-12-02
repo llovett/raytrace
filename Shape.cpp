@@ -2,18 +2,6 @@
 #include <algorithm>
 #include <math.h>
 
-GLfloat Shape::dot(GLfloat *d1, GLfloat *d2) const {
-    return d1[0]*d2[0] + d1[1]*d2[1] + d1[2]*d2[2];
-}
-
-void Shape::normalize(GLfloat *d) const {
-    GLfloat origin[3] = {0, 0, 0};
-    GLfloat magnitude = dist(origin, d);
-    for ( int i=0; i<3; i++ ) {
-	d[i] /= magnitude;
-    }
-}
-
 void Shape::setMaterial(mProps *mat) {
     this->material = mat;
 }
@@ -59,4 +47,17 @@ GLfloat dist(GLfloat *d1, GLfloat *d2) {
     return sqrt( (d1[0]-d2[0])*(d1[0]-d2[0]) +
 		 (d1[1]-d2[1])*(d1[1]-d2[1]) +
 		 (d1[2]-d2[2])*(d1[2]-d2[2]) );
+}
+
+GLfloat *normalize(GLfloat *d) {
+    GLfloat origin[3] = {0, 0, 0};
+    GLfloat magnitude = dist(origin, d);
+    for ( int i=0; i<3; i++ ) {
+	d[i] /= magnitude;
+    }
+    return d;
+}
+
+GLfloat dot(GLfloat *d1, GLfloat *d2) {
+    return d1[0]*d2[0] + d1[1]*d2[1] + d1[2]*d2[2];
 }

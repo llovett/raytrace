@@ -88,7 +88,8 @@ mProps *buildMaterial(GLfloat color[4],
 
 lProps *buildLight(GLfloat ared, GLfloat agreen, GLfloat ablue, GLfloat aalpha,
 		   GLfloat dred, GLfloat dgreen, GLfloat dblue, GLfloat dalpha,
-		   GLfloat sred, GLfloat sgreen, GLfloat sblue, GLfloat salpha) {
+		   GLfloat sred, GLfloat sgreen, GLfloat sblue, GLfloat salpha,
+		   GLfloat x, GLfloat y, GLfloat z) {
     lProps *props = new lProps();
     GLfloat *ambient = new GLfloat[4];
     GLfloat *diffuse = new GLfloat[4];
@@ -113,6 +114,10 @@ lProps *buildLight(GLfloat ared, GLfloat agreen, GLfloat ablue, GLfloat aalpha,
     props->diffuse = diffuse;
     props->specular = specular;
 
+    props->x = x;
+    props->y = y;
+    props->z = z;
+
     return props;
 }
 
@@ -136,17 +141,19 @@ void buildScene() {
     Shapes.push_back( s );
 
     /* some lights */
-    lProps *whiteLight = buildLight(
-	0.8, 0.8, 0.8, 1.0,	/* ambient color */
-	0.8, 0.8, 0.8, 1.0,	/* diffuse color */
-	0.8, 0.8, 0.8, 1.0 	/* specular color */
+    lProps *blueLight = buildLight(
+	0.2, 0.2, 0.8, 1.0,	/* ambient color */
+	0.2, 0.2, 0.8, 1.0,	/* diffuse color */
+	0.2, 0.2, 0.8, 1.0, 	/* specular color */
+	5, 0, 0
 	);
     lProps *redLight = buildLight(
 	0.9, 0.2, 0.1, 1.0,	/* ambient color */
 	1.0, 0.0, 0.0, 0.0,	/* diffuse color */
-	1.0, 0.0, 0.0, 0.0 	/* specular color */
+	1.0, 0.0, 0.0, 0.0, 	/* specular color */
+	-5, -5, 0
 	);
-    Lights.push_back( whiteLight );
+    Lights.push_back( blueLight );
     Lights.push_back( redLight );
 }
 
@@ -180,6 +187,10 @@ void makeRay(int i, int j, ray *r) {
 	direction[k] = pixel[k] - r->point[k];
     }
     copy(direction, direction+3, r->direction);
+}
+
+GLfloat intersectLight( lProps *light, ray *r ) {
+    return (light->x - r->point[0])/r->direction[0];
 }
 
 intersection *intersect( ray *r ) {
@@ -227,20 +238,61 @@ GLfloat *trace(ray *r, int level, float weight) {
 	/***********************/
 	GLfloat *shapeColor = theShape->getColor();
 	GLfloat *Ka = theShape->getAmbient();
-	GLfloat ambientColor[3] = {
+	GLfloat ambientReflection[3] = {
 	    Ka[0] * shapeColor[0],
 	    Ka[1] * shapeColor[1],
 	    Ka[2] * shapeColor[2]
 	};
 	/* Find net ambient light from all light sources */
-	GLfloat ambientLightsNet[3] = { 0.0, 0.0, 0.0 };
+	GLfloat ambientLight[3] = { 0.0, 0.0, 0.0 };
 	for ( int i=0; i<Lights.size(); i++ ) {
 	    lProps *light = Lights[i];
-	    ambientLightsNet[0] += ambientColor[0] * light->ambient[0];
-	    ambientLightsNet[1] += ambientColor[1] * light->ambient[1];
-	    ambientLightsNet[2] += ambientColor[2] * light->ambient[2];
+	    ambientLight[0] += ambientReflection[0] * light->ambient[0];
+	    ambientLight[1] += ambientReflection[1] * light->ambient[1];
+	    ambientLight[2] += ambientReflection[2] * light->ambient[2];
 	}
-	copy(ambientLightsNet, ambientLightsNet+3, color);
+
+	/***********************/
+	/* DIFFUSE CALCULATION */
+	/***********************/
+	GLfloat diffuseLight[3] = { 0.0, 0.0, 0.0 };
+	for ( int i = 0; i < Lights.size(); ++i ) {
+	    ray r;
+	    GLfloat *point = p->point;
+	    r.point = point;
+	    GLfloat d[3] = {
+		Lights[i]->x - point[0],
+		Lights[i]->y - point[1],
+		Lights[i]->z - point[2]
+	    };
+	    r.direction = d;
+	    GLfloat t = intersectLight( Lights[i], &r );
+
+	    /* see if there are any objects between intersection and light */
+	    int impeded = 0;	/* assume nothing in the way */
+	    for ( int j = 0; j < Shapes.size(); ++j ) {
+		intersection *x = Shapes[j]->intersect( &r );
+		if ( x->t < t ) {
+		    impeded = 1;
+		    break;
+		}
+	    }
+
+	    /* there was nothing in the way, so calculate diffuse light */
+	    if ( !impeded ) {
+		GLfloat *Kd = theShape->getDiffuse();
+		GLfloat *L = normalize( r.direction );
+		GLfloat *SN = p->normal;
+		GLfloat *intensity = Lights[i]->diffuse;
+
+		for ( int k=0; k<3; k++ ) {
+		    diffuseLight[k] += Kd[k] * dot(L,SN) * intensity[k] * theShape->getColor()[k];
+		}
+	    }
+	}
+
+
+	copy(ambientLight, ambientLight+3, color);
 	color[3] = 1.0;
 	// if (p->point[1] < 0)
 	//     copy(RED, RED+4, color);

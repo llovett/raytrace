@@ -14,12 +14,10 @@ public:
     GLfloat *getSpecular() const;
     GLfloat getShininess() const;
     GLfloat *getColor() const;
-
-protected:
-    GLfloat dot(GLfloat*, GLfloat*) const;
-    void normalize(GLfloat *) const;
 };
 
 GLfloat dist(GLfloat*, GLfloat*);
+GLfloat *normalize(GLfloat *);
+GLfloat dot(GLfloat*, GLfloat*);
 
 #endif
