@@ -9,10 +9,10 @@
 #include "Shape.h"
 
 /* N is the height of the bitmap; M is its width */
-#define N 200
-#define M 400
+#define N 300
+#define M 600
 /* How deep we should be ray-tracing */
-#define MAX_DEPTH 3
+#define MAX_DEPTH 5
 /* Minimum reflection constant needed to calculate a ray-trace for light */
 #define MIN_WEIGHT 0.01
 
@@ -42,7 +42,7 @@ vector<Shape*> Shapes;
 vector<lProps*> Lights;
 
 void init() {
-    glClearColor(1.0, 1.0, 0.0, 0.0);  // yellow background
+    glClearColor(0.9, 0.9, 0.9, 1.0);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluOrtho2D(0.0, 600.0, 0.0, 600.0 );
@@ -98,17 +98,17 @@ lProps *buildLight(GLfloat ared, GLfloat agreen, GLfloat ablue, GLfloat aalpha,
     ambient[0] = ared;
     ambient[1] = agreen;
     ambient[2] = ablue;
-    ambient[4] = aalpha;
+    ambient[3] = aalpha;
 
     diffuse[0] = dred;
     diffuse[1] = dgreen;
     diffuse[2] = dblue;
-    diffuse[4] = dalpha;
+    diffuse[3] = dalpha;
 
     specular[0] = sred;
     specular[1] = sgreen;
     specular[2] = sblue;
-    specular[4] = salpha;
+    specular[3] = salpha;
 
     props->ambient = ambient;
     props->diffuse = diffuse;
@@ -133,7 +133,7 @@ void buildScene() {
     Sphere *s = new Sphere(0, 0, 0, 3);
     GLfloat color[4] = { 0.5, 1.0, 1.0, 1.0 };
     GLfloat ambient[3] = { 0.0, 0.3, 0.6 };
-    GLfloat diffuse[3] = { 0.2, 0.2, 0.7 };
+    GLfloat diffuse[3] = { 0.9, 0.9, 0.9 };
     GLfloat specular[3] = { 0.2, 0.2, 0.4 };
     mProps *diffuseBlueMaterial = buildMaterial(color, ambient, diffuse, specular, 5);
     s->setMaterial( diffuseBlueMaterial );
@@ -143,16 +143,16 @@ void buildScene() {
     /* some lights */
     lProps *blueLight = buildLight(
 	0.2, 0.2, 0.8, 1.0,	/* ambient color */
-	0.2, 0.2, 0.8, 1.0,	/* diffuse color */
+	0.2, 0.2, 0.9, 1.0,	/* diffuse color */
 	0.2, 0.2, 0.8, 1.0, 	/* specular color */
 	5, 0, 0
 	);
     lProps *redLight = buildLight(
-	0.9, 0.2, 0.1, 1.0,	/* ambient color */
-	1.0, 0.0, 0.0, 0.0,	/* diffuse color */
-	1.0, 0.0, 0.0, 0.0, 	/* specular color */
-	-5, -5, 0
-	);
+    	0.9, 0.2, 0.1, 1.0,	/* ambient color */
+    	1.0, 0.2, 0.2, 0.0,	/* diffuse color */
+    	1.0, 0.0, 0.0, 0.0, 	/* specular color */
+    	-5, -5, 0
+    	);
     Lights.push_back( blueLight );
     Lights.push_back( redLight );
 }
@@ -272,7 +272,7 @@ GLfloat *trace(ray *r, int level, float weight) {
 	    int impeded = 0;	/* assume nothing in the way */
 	    for ( int j = 0; j < Shapes.size(); ++j ) {
 		intersection *x = Shapes[j]->intersect( &r );
-		if ( x->t < t ) {
+		if ( x && x->t < t ) {
 		    impeded = 1;
 		    break;
 		}
@@ -291,8 +291,13 @@ GLfloat *trace(ray *r, int level, float weight) {
 	    }
 	}
 
-
-	copy(ambientLight, ambientLight+3, color);
+	/*************************/
+        /* NET COLOR CALCULATION */
+        /*************************/
+	for ( int i=0; i<3; i++ ) {
+	    color[i] = ambientLight[i]/* + diffuseLight[i]*/;
+	}
+	// copy(ambientLight, ambientLight+3, color);
 	color[3] = 1.0;
 	// if (p->point[1] < 0)
 	//     copy(RED, RED+4, color);
@@ -300,7 +305,7 @@ GLfloat *trace(ray *r, int level, float weight) {
 	//     copy(GREEN, GREEN+4, color);
     }
     else
-	copy(BLUE, BLUE+4, color);
+	copy(BACKGROUND, BACKGROUND+4, color);
     return color;
 }
 
