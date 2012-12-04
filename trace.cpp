@@ -261,11 +261,12 @@ GLfloat *trace(ray *r, int level, float weight) {
 	    GLfloat *point = p->point;
 	    r.point = point;
 	    GLfloat d[3] = {
-		Lights[i]->x - point[0],
-		Lights[i]->y - point[1],
-		Lights[i]->z - point[2]
+		point[0] - Lights[i]->x,
+		point[1] - Lights[i]->y,
+		point[2] - Lights[i]->z
 	    };
 	    r.direction = d;
+	    normalize( r.direction );
 	    GLfloat t = intersectLight( Lights[i], &r );
 
 	    /* see if there are any objects between intersection and light */
@@ -281,12 +282,15 @@ GLfloat *trace(ray *r, int level, float weight) {
 	    /* there was nothing in the way, so calculate diffuse light */
 	    if ( !impeded ) {
 		GLfloat *Kd = theShape->getDiffuse();
-		GLfloat *L = normalize( r.direction );
+		GLfloat *L = r.direction;
 		GLfloat *SN = p->normal;
 		GLfloat *intensity = Lights[i]->diffuse;
 
 		for ( int k=0; k<3; k++ ) {
 		    diffuseLight[k] += Kd[k] * dot(L,SN) * intensity[k] * theShape->getColor()[k];
+		    // if ( diffuseLight[k] < 0 ) {
+		    // 	cout << "something is wrong... diffuseLight["<<k<<"] is "<<diffuseLight[k]<<endl;
+		    // }
 		}
 	    }
 	}
@@ -295,7 +299,7 @@ GLfloat *trace(ray *r, int level, float weight) {
         /* NET COLOR CALCULATION */
         /*************************/
 	for ( int i=0; i<3; i++ ) {
-	    color[i] = ambientLight[i]/* + diffuseLight[i]*/;
+	    color[i] = ambientLight[i] + diffuseLight[i];
 	}
 	// copy(ambientLight, ambientLight+3, color);
 	color[3] = 1.0;
