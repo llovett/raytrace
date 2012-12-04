@@ -17,7 +17,7 @@
 #define N WIDTH
 #define M HEIGHT
 /* How deep we should be ray-tracing */
-#define MAX_DEPTH 5
+#define MAX_DEPTH 100
 /* Minimum reflection constant needed to calculate a ray-trace for light */
 #define MIN_WEIGHT 0.01
 
@@ -136,15 +136,15 @@ lProps *buildLight(GLfloat ared, GLfloat agreen, GLfloat ablue, GLfloat aalpha,
 void buildScene() {
     /* some objects */
 
-    Sphere *s = new Sphere(0, 0, 2, 3);
+    Sphere *s = new Sphere(0, -2, 0, 3);
     GLfloat color[4] = { 0.5, 1.0, 1.0, 1.0 };
     GLfloat ambient[3] = { 0.0, 0.3, 0.6 };
     GLfloat diffuse[3] = { 0.9, 0.9, 0.9 };
-    GLfloat specular[3] = { 0.1, 0.7, 0.9 };
-    mProps *diffuseBlueMaterial = buildMaterial(color, ambient, diffuse, specular, 20);
+    GLfloat specular[3] = { 0.8, 0.8, 0.9 };
+    mProps *diffuseBlueMaterial = buildMaterial(color, ambient, diffuse, specular, 10);
     s->setMaterial( diffuseBlueMaterial );
 
-    Sphere *s2 = new Sphere(0, 4, 2, 3);
+    Sphere *s2 = new Sphere(0, 4, 0, 3);
     s2->setMaterial( diffuseBlueMaterial );
 
     Shapes.push_back( s );
@@ -334,11 +334,29 @@ GLfloat *trace(ray *r, int level, float weight) {
 	    }
 	}
 
+	/**************************/
+	/* REFLECTION CALCULATION */
+	/**************************/
+	GLfloat reflect[3];
+	GLfloat* reflectionLight;
+	GLfloat c = -dot( SN, r->direction );
+	for ( int i = 0; i < 3; ++i ) {
+	    reflect[i] = r->direction[i] + 2*p->normal[i]*c;
+	}
+	ray reflectRay;
+	reflectRay.point = p->point;
+	reflectRay.direction = reflect;
+	// TODO!: do not let the weight be 1.0
+	reflectionLight = trace( &reflectRay, level+1, weight );
+	for ( int i = 0; i < 3; ++i ) {
+	    reflectionLight[i] *= theShape->getSpecular()[i];
+	}
+
 	/*************************/
         /* NET COLOR CALCULATION */
         /*************************/
 	for ( int i=0; i<3; i++ ) {
-	    color[i] = ambientLight[i] + diffuseLight[i] + specularLight[i];
+	    color[i] = ambientLight[i] + diffuseLight[i] + specularLight[i] + reflectionLight[i];
 	}
 	color[3] = 1.0;
     } else if ( level == 0 ) {
