@@ -35,6 +35,7 @@ GLfloat image[N][M][3];
 GLfloat RED[4] = {1.0, 0.0, 0.0, 1.0};
 GLfloat BLUE[4] = {0.0, 0.0, 1.0, 1.0};
 GLfloat GREEN[4] = {0.0, 1.0, 0.0, 1.0};
+GLfloat BLACK[4] = {0.0, 0.0, 0.0, 1.0};
 GLfloat BACKGROUND[4] = {1.0, 1.0, 1.0, 1.0};
 
 /* shapes in the scene */
@@ -337,9 +338,11 @@ GLfloat *trace(ray *r, int level, float weight) {
 	//     copy(RED, RED+4, color);
 	// else
 	//     copy(GREEN, GREEN+4, color);
-    }
-    else
+    } else if ( level == 0 ) {
 	copy(BACKGROUND, BACKGROUND+4, color);
+    } else {
+	copy(BLACK, BLACK+4, color);
+    }
     return color;
 }
 
