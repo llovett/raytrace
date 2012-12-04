@@ -1,0 +1,4 @@
+README - Luke Lovett
+
+Currently, my scene is a single sphere, with ambient, diffuse, and specular
+lighting. I'm in the process of implementing reflections now.
