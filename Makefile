@@ -11,8 +11,8 @@ shape: Shape.h Shape.cpp
 sphere: Sphere.h Sphere.cpp shape
 	$(CPP) -c Sphere.cpp -o Sphere.o $(FLAGS) $(LIBS)
 
-box: box.h box.cpp shape
-	$(CPP) -c box.cpp -o Box.o $(FLAGS) $(LIBS)
+box: Box.h Box.cpp shape
+	$(CPP) -c Box.cpp -o Box.o $(FLAGS) $(LIBS)
 
 trace: trace.cpp trace.h box sphere
 	$(CPP) trace.cpp Box.o Sphere.o Shape.o -o $(APPS) $(FLAGS) $(LIBS)

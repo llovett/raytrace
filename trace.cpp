@@ -9,9 +9,13 @@
 #include "Sphere.h"
 #include "Shape.h"
 
+#define WIDTH 600
+#define HEIGHT 600
+
+
 /* N is the height of the bitmap; M is its width */
-#define N 300
-#define M 600
+#define N WIDTH
+#define M HEIGHT
 /* How deep we should be ray-tracing */
 #define MAX_DEPTH 5
 /* Minimum reflection constant needed to calculate a ray-trace for light */
@@ -24,7 +28,7 @@ GLfloat ViewerPosition[3] = {15.0, 0.0, 2.0};
 /* Upper left corner pixel grid */
 GLfloat GridX = 10, GridY = -2, GridZ = 3;
 /* dimensions of the pixel grid. */
-GLfloat GridWidth = 4, GridHeight = 2;  
+GLfloat GridWidth = 4, GridHeight = 4;
 /* dimensions of the polygon with one vertex at the origin */
 GLfloat PolyWidth = 4, PolyHeight = 4;
 
@@ -47,7 +51,7 @@ void init() {
     glClearColor(0.9, 0.9, 0.9, 1.0);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(0.0, 600.0, 0.0, 600.0 );
+    gluOrtho2D(0.0, WIDTH, 0.0, HEIGHT );
 }
 
 void reshape(int w, int h) {
@@ -140,7 +144,11 @@ void buildScene() {
     mProps *diffuseBlueMaterial = buildMaterial(color, ambient, diffuse, specular, 20);
     s->setMaterial( diffuseBlueMaterial );
 
+    Sphere *s2 = new Sphere(0, 4, 2, 3);
+    s2->setMaterial( diffuseBlueMaterial );
+
     Shapes.push_back( s );
+    Shapes.push_back( s2 );
 
     /* some lights */
     lProps *blueLight = buildLight(
@@ -161,7 +169,7 @@ void buildScene() {
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
-    glRasterPos2i(300-M/2, 300-N/2);
+    glRasterPos2i(0, 0);//WIDTH-M/2, HEIGHT-N/2);
     // position of the lower left corner
     // of the bitmap in window coords
 
@@ -332,12 +340,7 @@ GLfloat *trace(ray *r, int level, float weight) {
 	for ( int i=0; i<3; i++ ) {
 	    color[i] = ambientLight[i] + diffuseLight[i] + specularLight[i];
 	}
-	// copy(ambientLight, ambientLight+3, color);
 	color[3] = 1.0;
-	// if (p->point[1] < 0)
-	//     copy(RED, RED+4, color);
-	// else
-	//     copy(GREEN, GREEN+4, color);
     } else if ( level == 0 ) {
 	copy(BACKGROUND, BACKGROUND+4, color);
     } else {
