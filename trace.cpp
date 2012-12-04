@@ -321,7 +321,7 @@ GLfloat *trace(ray *r, int level, float weight) {
 	    lProps *theLight = Lights[i];
 	    GLfloat RdotVtoTheN = powf(dot(R, V), theShape->getShininess());
 	    for ( int j=0; j<3; j++ ) {
-		specularLight[j] = theShape->getSpecular()[j] * theLight->specular[j] * RdotVtoTheN;
+		specularLight[j] += theShape->getSpecular()[j] * theLight->specular[j] * RdotVtoTheN;
 	    }
 	}
 
