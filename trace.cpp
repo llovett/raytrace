@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <vector>
 #include <iostream>
+#include <cmath>
 #include "trace.h"
 #include "Sphere.h"
 #include "Shape.h"
@@ -130,12 +131,12 @@ lProps *buildLight(GLfloat ared, GLfloat agreen, GLfloat ablue, GLfloat aalpha,
 void buildScene() {
     /* some objects */
 
-    Sphere *s = new Sphere(0, 0, 0, 3);
+    Sphere *s = new Sphere(0, 0, 2, 3);
     GLfloat color[4] = { 0.5, 1.0, 1.0, 1.0 };
     GLfloat ambient[3] = { 0.0, 0.3, 0.6 };
     GLfloat diffuse[3] = { 0.9, 0.9, 0.9 };
-    GLfloat specular[3] = { 0.2, 0.2, 0.4 };
-    mProps *diffuseBlueMaterial = buildMaterial(color, ambient, diffuse, specular, 5);
+    GLfloat specular[3] = { 0.1, 0.7, 0.9 };
+    mProps *diffuseBlueMaterial = buildMaterial(color, ambient, diffuse, specular, 20);
     s->setMaterial( diffuseBlueMaterial );
 
     Shapes.push_back( s );
@@ -144,14 +145,14 @@ void buildScene() {
     lProps *blueLight = buildLight(
 	0.2, 0.2, 0.8, 1.0,	/* ambient color */
 	0.2, 0.2, 0.9, 1.0,	/* diffuse color */
-	0.2, 0.2, 0.8, 1.0, 	/* specular color */
-	5, 0, 0
+	1.0, 1.0, 1.0, 1.0, 	/* specular color */
+    	5, 1, 8
 	);
     lProps *redLight = buildLight(
     	0.9, 0.2, 0.1, 1.0,	/* ambient color */
-    	1.0, 0.2, 0.2, 0.0,	/* diffuse color */
-    	1.0, 0.0, 0.0, 0.0, 	/* specular color */
-    	-5, -5, 0
+    	1.0, 0.2, 0.2, 1.0,	/* diffuse color */
+    	1.0, 0.0, 0.0, 1.0, 	/* specular color */
+	7, -2, -4
     	);
     Lights.push_back( blueLight );
     Lights.push_back( redLight );
@@ -256,6 +257,8 @@ GLfloat *trace(ray *r, int level, float weight) {
 	/* DIFFUSE CALCULATION */
 	/***********************/
 	GLfloat diffuseLight[3] = { 0.0, 0.0, 0.0 };
+	GLfloat *L;
+	GLfloat *SN;
 	for ( int i = 0; i < Lights.size(); ++i ) {
 	    ray r;
 	    GLfloat *point = p->point;
@@ -279,19 +282,46 @@ GLfloat *trace(ray *r, int level, float weight) {
 		}
 	    }
 
+	    L = r.direction;
+	    SN = p->normal;
 	    /* there was nothing in the way, so calculate diffuse light */
 	    if ( !impeded ) {
 		GLfloat *Kd = theShape->getDiffuse();
-		GLfloat *L = r.direction;
-		GLfloat *SN = p->normal;
 		GLfloat *intensity = Lights[i]->diffuse;
 
 		for ( int k=0; k<3; k++ ) {
 		    diffuseLight[k] += Kd[k] * dot(L,SN) * intensity[k] * theShape->getColor()[k];
-		    // if ( diffuseLight[k] < 0 ) {
-		    // 	cout << "something is wrong... diffuseLight["<<k<<"] is "<<diffuseLight[k]<<endl;
-		    // }
 		}
+	    }
+	}
+
+
+	/************************/
+	/* SPECULAR CALCULATION */
+	/************************/
+
+	// Calculate reflection vector
+	// Since every term in the calculation is already normalized,
+	// R itself should be normalized after this.
+	GLfloat R[3];
+	GLfloat LdotN = dot(L, SN);
+	for ( int i=0; i<3; i++ ) {
+	    R[i] = 2*LdotN*SN[i] - L[i];
+	}
+
+	// Get vector to the viewer
+	GLfloat V[3];
+	for ( int i=0; i<3; i++ ) {
+	    V[i] = p->point[i] - ViewerPosition[i];
+	}
+	normalize( V );
+	
+	GLfloat specularLight[3] = { 0.0, 0.0, 0.0 };
+	for ( int i=0; i<Lights.size(); i++ ) {
+	    lProps *theLight = Lights[i];
+	    GLfloat RdotVtoTheN = powf(dot(R, V), theShape->getShininess());
+	    for ( int j=0; j<3; j++ ) {
+		specularLight[j] = theShape->getSpecular()[j] * theLight->specular[j] * RdotVtoTheN;
 	    }
 	}
 
@@ -299,7 +329,7 @@ GLfloat *trace(ray *r, int level, float weight) {
         /* NET COLOR CALCULATION */
         /*************************/
 	for ( int i=0; i<3; i++ ) {
-	    color[i] = ambientLight[i] + diffuseLight[i];
+	    color[i] = ambientLight[i] + diffuseLight[i] + specularLight[i];
 	}
 	// copy(ambientLight, ambientLight+3, color);
 	color[3] = 1.0;
