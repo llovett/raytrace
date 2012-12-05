@@ -3,6 +3,8 @@
 #ifndef TRACE_H
 #define TRACE_H
 
+#define EPSILON 0.01
+
 /* models a ray */
 typedef struct {
     /* these should have exactly three dimensions each */

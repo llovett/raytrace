@@ -55,11 +55,11 @@ intersection *Sphere::intersect(ray *r) const {
     double tNegative = (2*vDotA - sqrt(sqrtQuantity)) / 2*vSq;
 
     /* no positive t value? */
-    if ( tPositive < 0 && tNegative < 0 ) {
+    if ( tPositive < EPSILON && tNegative < EPSILON ) {
 	return NULL;
     }
-    double t = tPositive < tNegative && tPositive > 0? tPositive : tNegative;
-    if ( t < 0 ) {
+    double t = tPositive < tNegative && tPositive > EPSILON? tPositive : tNegative;
+    if ( t < EPSILON ) {
 	return NULL;
     }
 

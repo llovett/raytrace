@@ -22,6 +22,8 @@
 /* The index-of-refraction of air (which we assume empty space in the scene is filled with)*/
 #define AIR_REFRACTION 1
 
+#define PI 3.14159
+
 using namespace std;
 
 /* Position of the viewer in word coords */
@@ -139,7 +141,7 @@ lProps *buildLight(GLfloat ared, GLfloat agreen, GLfloat ablue, GLfloat aalpha,
 void buildScene() {
     /* some objects */
 
-    Sphere *s = new Sphere(0, 0, -1, 1);
+    Sphere *s = new Sphere(2, 0, 0, 1);
     GLfloat color[4] = { 0.5, 1.0, 1.0, 0.5 };
     GLfloat ambient[3] = { 0.0, 0.3, 0.6 };
     GLfloat diffuse[3] = { 0.9, 0.9, 0.9 };
@@ -147,10 +149,10 @@ void buildScene() {
     mProps *diffuseBlueMaterial = buildMaterial(color, ambient, diffuse, specular, 10, 1.333);
     s->setMaterial( diffuseBlueMaterial );
 
-    Sphere *s2 = new Sphere(0, 0, 0, 1);
+    Sphere *s2 = new Sphere(0, -4, 0, 1);
     s2->setMaterial( diffuseBlueMaterial );
 
-    Sphere *s3 = new Sphere(-4, 0, 0, 2);
+    Sphere *s3 = new Sphere(-2, 0, 0, 2);
     GLfloat color2[4] = { 1.0, 0.8, 0.5, 1.0 };
     GLfloat ambient2[3] = { 0.6, 0.3, 0.0 };
     GLfloat diffuse2[3] = { 0.9, 0.9, 0.9 };
@@ -159,7 +161,7 @@ void buildScene() {
     s3->setMaterial( redMaterial );
 
     Shapes.push_back( s );
-    // Shapes.push_back( s2 );
+    Shapes.push_back( s2 );
     Shapes.push_back( s3 );
 
     /* some lights */
@@ -240,7 +242,7 @@ intersection *intersect( ray *r ) {
     return closest;
 }
 
-GLfloat *trace(ray *r, int level, GLfloat *weight) {
+GLfloat *trace(ray *r, int level, GLfloat *weight, int shouldReflect) {
     // This returns the color of the ray
     intersection *p;
     GLfloat *color = new GLfloat[4];
@@ -364,40 +366,45 @@ GLfloat *trace(ray *r, int level, GLfloat *weight) {
 	GLfloat reflect[3];
 	GLfloat* reflectionLight;
 	GLfloat c = -dot( SN, r->direction );
-	for ( int i = 0; i < 3; ++i ) {
-	    reflect[i] = r->direction[i] + 2*p->normal[i]*c;
-	}
-
-	normalize( reflect );
-	ray reflectRay;
-	reflectRay.point = p->point;
-	reflectRay.direction = reflect;
-	GLfloat newWeight[3] = {
-	    weight[0] * theShape->getSpecular()[0],
-	    weight[1] * theShape->getSpecular()[1],
-	    weight[2] * theShape->getSpecular()[2]
-	};
-	reflectionLight = trace( &reflectRay, level+1, newWeight );
-	for ( int i = 0; i < 3; ++i ) {
-	    reflectionLight[i] *= newWeight[i];
+	if ( shouldReflect ) {
+	    for ( int i = 0; i < 3; ++i ) {
+		reflect[i] = r->direction[i] + 2*p->normal[i]*c;
+	    }
+	    normalize( reflect );
+	    ray reflectRay;
+	    reflectRay.point = p->point;
+	    reflectRay.direction = reflect;
+	    GLfloat newWeight[3] = {
+		weight[0] * theShape->getSpecular()[0],
+		weight[1] * theShape->getSpecular()[1],
+		weight[2] * theShape->getSpecular()[2]
+	    };
+	    reflectionLight = trace( &reflectRay, level+1, newWeight, 1 );
+	    for ( int i = 0; i < 3; ++i ) {
+		reflectionLight[i] *= newWeight[i];
+	    }
+	} else {
+	    reflectionLight = new GLfloat[4];
+	    copy(BLACK, BLACK+4, reflectionLight);
 	}
 
 	/**************************/
 	/* REFRACTION CALCULATION */
 	/**************************/
+	
 	GLfloat *refractionLight;
+	GLfloat n = AIR_REFRACTION / theShape->getRefraction();
 	if ( theShape->material->color[3] < 1 ) {
 	    GLfloat refract[3];
-	    GLfloat n = AIR_REFRACTION / theShape->getRefraction();
 	    GLfloat c2 = sqrtf(1 - n*n*(1 - c*c));
 	    for ( int i = 0; i < 3; ++i ) {
-		refract[i] = n*r->direction[i] + n*c - c2 * SN[i];
+	    	refract[i] = n*r->direction[i] + n*c - c2 * SN[i];
 	    }
-	    normalize( refract );
+	    // normalize( refract );
 	    ray refractRay;
 	    refractRay.point = p->point;
 	    refractRay.direction = refract;
-	    refractionLight = trace( &refractRay, level+1, newWeight );
+	    refractionLight = trace( &refractRay, level+1, weight, shouldReflect? 0 : 1 );
 	} else {
 	    refractionLight = new GLfloat[4];
 	    copy(BLACK, BLACK+4, refractionLight);
@@ -409,12 +416,19 @@ GLfloat *trace(ray *r, int level, GLfloat *weight) {
 	for ( int i=0; i<3; i++ ) {
 	    color[i] = ambientLight[i] + diffuseLight[i] + specularLight[i] + reflectionLight[i] + refractionLight[i];
 	}
-	color[3] = 1.0;
+	// color[3] = 1.0;
     } else if ( level == 0 ) {
 	copy(BACKGROUND, BACKGROUND+4, color);
     } else {
 	copy(BLACK, BLACK+4, color);
     }
+
+    // Clamp the color
+    for ( int i = 0; i < 3; ++i ) {
+	color[i] = color[i] > 1? 1 : color[i];
+	color[i] = color[i] < EPSILON? 0 : color[i];
+    }
+
     
     return color;
 }
@@ -433,7 +447,7 @@ void makePicture() {
 	    r.direction = new GLfloat[3];
 	    makeRay(i, j, &r);
 	    GLfloat startingWeight[] = { 1.0, 1.0, 1.0 };
-	    color = trace(&r, 0, startingWeight);
+	    color = trace(&r, 0, startingWeight, 1);
 	    copy(color, color+3, image[N-i-1][j]);
 	}
     }
