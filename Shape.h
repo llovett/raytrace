@@ -13,6 +13,7 @@ public:
     GLfloat *getDiffuse() const;
     GLfloat *getSpecular() const;
     GLfloat getShininess() const;
+    GLfloat getRefraction() const;
     GLfloat *getColor() const;
 };
 

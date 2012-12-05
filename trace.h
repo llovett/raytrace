@@ -31,6 +31,8 @@ typedef struct {
     GLfloat *ambient, *diffuse, *specular;
     /* shininess- how focused the reflection is, not how bright! */
     GLfloat shininess;
+    /* refract - the index of refraction for this material */
+    GLfloat refract;
 } mProps;
 
 /* defines properties for lighting */

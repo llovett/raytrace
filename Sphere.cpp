@@ -58,7 +58,10 @@ intersection *Sphere::intersect(ray *r) const {
     if ( tPositive < 0 && tNegative < 0 ) {
 	return NULL;
     }
-    double t = tPositive < tNegative? tPositive : tNegative;
+    double t = tPositive < tNegative && tPositive > 0? tPositive : tNegative;
+    if ( t < 0 ) {
+	return NULL;
+    }
 
     /* use the t-values to determine point of intersection */
     GLfloat *intersectPoint = new GLfloat[3];

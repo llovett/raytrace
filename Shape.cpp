@@ -43,6 +43,13 @@ GLfloat Shape::getShininess() const {
     return 0.0f;
 }
 
+GLfloat Shape::getRefraction() const {
+    if ( this->material ) {
+	return this->material->refract;
+    }
+    return 0.0f;
+}
+
 GLfloat dist(GLfloat *d1, GLfloat *d2) {
     return sqrt( (d1[0]-d2[0])*(d1[0]-d2[0]) +
 		 (d1[1]-d2[1])*(d1[1]-d2[1]) +

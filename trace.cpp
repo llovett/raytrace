@@ -9,17 +9,18 @@
 #include "Sphere.h"
 #include "Shape.h"
 
-#define WIDTH 600
-#define HEIGHT 600
-
+#define WIDTH 800
+#define HEIGHT 800
 
 /* N is the height of the bitmap; M is its width */
 #define N WIDTH
 #define M HEIGHT
 /* How deep we should be ray-tracing */
-#define MAX_DEPTH 100
+#define MAX_DEPTH 4
 /* Minimum reflection constant needed to calculate a ray-trace for light */
 #define MIN_WEIGHT 0.01
+/* The index-of-refraction of air (which we assume empty space in the scene is filled with)*/
+#define AIR_REFRACTION 1
 
 using namespace std;
 
@@ -67,7 +68,8 @@ mProps *buildMaterial(GLfloat color[4],
 		      GLfloat ambient[3],
 		      GLfloat diffuse[3],
 		      GLfloat specular[3],
-		      GLfloat shininess) {
+		      GLfloat shininess,
+		      GLfloat refract) {
     mProps *props = new mProps();
 
     GLfloat *myColor = new GLfloat[4];
@@ -87,6 +89,7 @@ mProps *buildMaterial(GLfloat color[4],
     props->diffuse = myDiffuse;
     props->specular = mySpecular;
     props->shininess = shininess;
+    props->refract = refract;
     props->color = myColor;
 
     return props;
@@ -136,19 +139,28 @@ lProps *buildLight(GLfloat ared, GLfloat agreen, GLfloat ablue, GLfloat aalpha,
 void buildScene() {
     /* some objects */
 
-    Sphere *s = new Sphere(0, -2, 0, 3);
-    GLfloat color[4] = { 0.5, 1.0, 1.0, 1.0 };
+    Sphere *s = new Sphere(0, 0, -1, 1);
+    GLfloat color[4] = { 0.5, 1.0, 1.0, 0.5 };
     GLfloat ambient[3] = { 0.0, 0.3, 0.6 };
     GLfloat diffuse[3] = { 0.9, 0.9, 0.9 };
     GLfloat specular[3] = { 0.8, 0.8, 0.9 };
-    mProps *diffuseBlueMaterial = buildMaterial(color, ambient, diffuse, specular, 10);
+    mProps *diffuseBlueMaterial = buildMaterial(color, ambient, diffuse, specular, 10, 1.333);
     s->setMaterial( diffuseBlueMaterial );
 
-    Sphere *s2 = new Sphere(0, 4, 0, 3);
+    Sphere *s2 = new Sphere(0, 0, 0, 1);
     s2->setMaterial( diffuseBlueMaterial );
 
+    Sphere *s3 = new Sphere(-4, 0, 0, 2);
+    GLfloat color2[4] = { 1.0, 0.8, 0.5, 1.0 };
+    GLfloat ambient2[3] = { 0.6, 0.3, 0.0 };
+    GLfloat diffuse2[3] = { 0.9, 0.9, 0.9 };
+    GLfloat specular2[3] = { 0.8, 0.8, 0.8 };
+    mProps *redMaterial = buildMaterial(color2, ambient2, diffuse2, specular2, 10, AIR_REFRACTION);
+    s3->setMaterial( redMaterial );
+
     Shapes.push_back( s );
-    Shapes.push_back( s2 );
+    // Shapes.push_back( s2 );
+    Shapes.push_back( s3 );
 
     /* some lights */
     lProps *blueLight = buildLight(
@@ -228,14 +240,26 @@ intersection *intersect( ray *r ) {
     return closest;
 }
 
-GLfloat *trace(ray *r, int level, float weight) {
+GLfloat *trace(ray *r, int level, GLfloat *weight) {
     // This returns the color of the ray
     intersection *p;
     GLfloat *color = new GLfloat[4];
 
-    // Base case
-    if ( level > MAX_DEPTH || weight < MIN_WEIGHT ) {
-	copy(BACKGROUND, BACKGROUND+4, color);
+    // Base case: max level reached
+    if ( level > MAX_DEPTH ) {
+	copy(BLACK, BLACK+4, color);
+	return color;
+    }
+    // Base case: minimum weight reached
+    int minWeightReached = 1;
+    for ( int i = 0; i < 3; ++i ) {
+	if ( weight[i] >= MIN_WEIGHT ) {
+	    minWeightReached = 0;
+	    break;
+	}
+    }
+    if ( minWeightReached ) {
+	copy(BLACK, BLACK+4, color);
 	return color;
     }
 
@@ -317,6 +341,7 @@ GLfloat *trace(ray *r, int level, float weight) {
 	for ( int i=0; i<3; i++ ) {
 	    R[i] = 2*LdotN*SN[i] - L[i];
 	}
+	normalize( R );
 
 	// Get vector to the viewer
 	GLfloat V[3];
@@ -343,20 +368,58 @@ GLfloat *trace(ray *r, int level, float weight) {
 	for ( int i = 0; i < 3; ++i ) {
 	    reflect[i] = r->direction[i] + 2*p->normal[i]*c;
 	}
+
+	normalize( reflect );
 	ray reflectRay;
 	reflectRay.point = p->point;
 	reflectRay.direction = reflect;
-	// TODO!: do not let the weight be 1.0
-	reflectionLight = trace( &reflectRay, level+1, weight );
+	GLfloat newWeight[3] = {
+	    weight[0] * theShape->getSpecular()[0],
+	    weight[1] * theShape->getSpecular()[1],
+	    weight[2] * theShape->getSpecular()[2]
+	};
+	reflectionLight = trace( &reflectRay, level+1, newWeight );
 	for ( int i = 0; i < 3; ++i ) {
-	    reflectionLight[i] *= theShape->getSpecular()[i];
+	    reflectionLight[i] *= newWeight[i];
 	}
+
+	/**************************/
+	/* REFRACTION CALCULATION */
+	/**************************/
+	GLfloat *refractionLight;
+	if ( theShape->material->color[3] < 1 ) {
+	    GLfloat refract[3];
+	    GLfloat n = AIR_REFRACTION / theShape->getRefraction();
+	    GLfloat c2 = sqrtf(1 - n*n*(1 - c));
+	    GLfloat c3 = n * n * (1.0 - c*c);
+	    if ( c3 <= 1.0 ) {
+		// cout << "Doing refraction... " << endl;
+		for ( int i = 0; i < 3; ++i ) {
+		    refract[i] = n * L[i] - (n + sqrtf(1.0 - c3)) * p->normal[i];
+		}
+		normalize( refract );
+		ray refractRay;
+		refractRay.point = p->point;
+		refractRay.direction = refract;
+		refractionLight = trace( &refractRay, level+1, newWeight );
+	    } else {
+		refractionLight = new GLfloat[4];
+		copy(BLACK, BLACK+4, refractionLight);
+	    }
+	} else {
+	    refractionLight = new GLfloat[4];
+	    copy(BLACK, BLACK+4, refractionLight);
+	}
+	for ( int i = 0; i < 3; ++i ) {
+	    // refractionLight[i] /= 4.0;
+	}
+
 
 	/*************************/
         /* NET COLOR CALCULATION */
         /*************************/
 	for ( int i=0; i<3; i++ ) {
-	    color[i] = ambientLight[i] + diffuseLight[i] + specularLight[i] + reflectionLight[i];
+	    color[i] = ambientLight[i] + diffuseLight[i] + specularLight[i] + reflectionLight[i] + refractionLight[i];
 	}
 	color[3] = 1.0;
     } else if ( level == 0 ) {
@@ -364,6 +427,7 @@ GLfloat *trace(ray *r, int level, float weight) {
     } else {
 	copy(BLACK, BLACK+4, color);
     }
+    
     return color;
 }
 
@@ -380,7 +444,8 @@ void makePicture() {
 	    r.point = new GLfloat[3];
 	    r.direction = new GLfloat[3];
 	    makeRay(i, j, &r);
-	    color = trace(&r, 0, 1.0);
+	    GLfloat startingWeight[] = { 1.0, 1.0, 1.0 };
+	    color = trace(&r, 0, startingWeight);
 	    copy(color, color+3, image[N-i-1][j]);
 	}
     }
