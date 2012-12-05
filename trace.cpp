@@ -7,6 +7,7 @@
 #include <cmath>
 #include "trace.h"
 #include "Sphere.h"
+#include "Plane.h"
 #include "Shape.h"
 
 #define WIDTH 800
