@@ -41,7 +41,7 @@ GLfloat RED[4] = {1.0, 0.0, 0.0, 1.0};
 GLfloat BLUE[4] = {0.0, 0.0, 1.0, 1.0};
 GLfloat GREEN[4] = {0.0, 1.0, 0.0, 1.0};
 GLfloat BLACK[4] = {0.0, 0.0, 0.0, 1.0};
-GLfloat BACKGROUND[4] = {1.0, 1.0, 1.0, 1.0};
+GLfloat BACKGROUND[4] = {1.0, 1.0, 0.0, 1.0};
 
 /* shapes in the scene */
 vector<Shape*> Shapes;
@@ -328,7 +328,6 @@ GLfloat *trace(ray *r, int level, GLfloat *weight) {
 	    }
 	}
 
-
 	/************************/
 	/* SPECULAR CALCULATION */
 	/************************/
@@ -390,30 +389,19 @@ GLfloat *trace(ray *r, int level, GLfloat *weight) {
 	if ( theShape->material->color[3] < 1 ) {
 	    GLfloat refract[3];
 	    GLfloat n = AIR_REFRACTION / theShape->getRefraction();
-	    GLfloat c2 = sqrtf(1 - n*n*(1 - c));
-	    GLfloat c3 = n * n * (1.0 - c*c);
-	    if ( c3 <= 1.0 ) {
-		// cout << "Doing refraction... " << endl;
-		for ( int i = 0; i < 3; ++i ) {
-		    refract[i] = n * L[i] - (n + sqrtf(1.0 - c3)) * p->normal[i];
-		}
-		normalize( refract );
-		ray refractRay;
-		refractRay.point = p->point;
-		refractRay.direction = refract;
-		refractionLight = trace( &refractRay, level+1, newWeight );
-	    } else {
-		refractionLight = new GLfloat[4];
-		copy(BLACK, BLACK+4, refractionLight);
+	    GLfloat c2 = sqrtf(1 - n*n*(1 - c*c));
+	    for ( int i = 0; i < 3; ++i ) {
+		refract[i] = n*r->direction[i] + n*c - c2 * SN[i];
 	    }
+	    normalize( refract );
+	    ray refractRay;
+	    refractRay.point = p->point;
+	    refractRay.direction = refract;
+	    refractionLight = trace( &refractRay, level+1, newWeight );
 	} else {
 	    refractionLight = new GLfloat[4];
 	    copy(BLACK, BLACK+4, refractionLight);
 	}
-	for ( int i = 0; i < 3; ++i ) {
-	    // refractionLight[i] /= 4.0;
-	}
-
 
 	/*************************/
         /* NET COLOR CALCULATION */
