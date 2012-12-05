@@ -14,11 +14,11 @@ shape: Shape.h Shape.cpp
 sphere: Sphere.h Sphere.cpp shape
 	$(CPP) -c Sphere.cpp -o Sphere.o $(FLAGS) $(LIBS)
 
-# plane: Plane.h Plane.cpp shape matrix
-# 	$(CPP) -c Plane.cpp -o Plane.o $(FLAGS) $(LIBS)
+plane: Plane.h Plane.cpp shape matrix
+	$(CPP) -c Plane.cpp -o Plane.o $(FLAGS) $(LIBS)
 
-trace: trace.cpp trace.h sphere #plane
-	$(CPP) trace.cpp Sphere.o Shape.o -o $(APPS) $(FLAGS) $(LIBS)
+trace: trace.cpp trace.h sphere plane
+	$(CPP) trace.cpp Sphere.o Shape.o Matrix.o Plane.o -o $(APPS) $(FLAGS) $(LIBS)
 
 test: Sphere.h Sphere.cpp shape
 	$(CPP) Sphere.cpp Shape.o $(FLAGS) $(LIBS)
