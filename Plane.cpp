@@ -2,6 +2,9 @@
 #include "Matrix.h"
 #include "trace.h"
 #include <math.h>
+#include <iostream>
+
+using namespace std;
 
 intersection *Plane::intersect(ray *r) const {
     /* find a normal to the plane */

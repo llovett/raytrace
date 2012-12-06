@@ -1,9 +1,14 @@
 /*     trace.cpp  */
 
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+
 #include <GL/glut.h>
 #include <algorithm>
 #include <vector>
 #include <iostream>
+#include <cstdio>
 #include <cmath>
 #include "trace.h"
 #include "Sphere.h"
@@ -17,13 +22,11 @@
 #define N WIDTH
 #define M HEIGHT
 /* How deep we should be ray-tracing */
-#define MAX_DEPTH 4
+#define MAX_DEPTH 2
 /* Minimum reflection constant needed to calculate a ray-trace for light */
-#define MIN_WEIGHT 0.01
+#define MIN_WEIGHT 0.1
 /* The index-of-refraction of air (which we assume empty space in the scene is filled with)*/
 #define AIR_REFRACTION 1
-
-#define PI 3.14159
 
 using namespace std;
 
@@ -146,8 +149,8 @@ void buildScene() {
     GLfloat color[4] = { 0.5, 1.0, 1.0, 0.5 };
     GLfloat ambient[3] = { 0.0, 0.3, 0.6 };
     GLfloat diffuse[3] = { 0.9, 0.9, 0.9 };
-    GLfloat specular[3] = { 0.8, 0.8, 0.9 };
-    mProps *diffuseBlueMaterial = buildMaterial(color, ambient, diffuse, specular, 10, 1.333);
+    GLfloat specular[3] = { 1.0, 1.0, 1.0 };
+    mProps *diffuseBlueMaterial = buildMaterial(color, ambient, diffuse, specular, 50, 1.333);
     s->setMaterial( diffuseBlueMaterial );
 
     Sphere *s2 = new Sphere(0, -4, 0, 1);
@@ -161,22 +164,33 @@ void buildScene() {
     mProps *redMaterial = buildMaterial(color2, ambient2, diffuse2, specular2, 10, AIR_REFRACTION);
     s3->setMaterial( redMaterial );
 
+    Plane *floor = new Plane(0, 0, -2,
+			     0, 1, -2,
+			     1, 0, -2);
+    GLfloat floorColor[4] = { 1.0, 1.0, 1.0, 1.0 };
+    GLfloat floorAmbient[4] = { 0.2, 0.2, 0.2, 0.2 };
+    GLfloat floorDiffuse[4] = { 1.0, 1.0, 1.0, 1.0 };
+    GLfloat floorSpecular[4] = { 0.1, 0.1, 0.1, 1.0 };
+    mProps *floorMaterial = buildMaterial(floorColor, floorAmbient, floorDiffuse, floorSpecular, 10, AIR_REFRACTION);
+    floor->setMaterial( floorMaterial );
+
     Shapes.push_back( s );
     Shapes.push_back( s2 );
     Shapes.push_back( s3 );
+    Shapes.push_back( floor );
 
     /* some lights */
     lProps *blueLight = buildLight(
 	0.2, 0.2, 0.8, 1.0,	/* ambient color */
 	0.2, 0.2, 0.9, 1.0,	/* diffuse color */
 	1.0, 1.0, 1.0, 1.0, 	/* specular color */
-    	5, 1, 8
+    	-5, 1, 8
 	);
     lProps *redLight = buildLight(
     	0.9, 0.2, 0.1, 1.0,	/* ambient color */
     	1.0, 0.2, 0.2, 1.0,	/* diffuse color */
     	1.0, 0.0, 0.0, 1.0, 	/* specular color */
-	7, -2, -4
+	-2, -2, -4
     	);
     Lights.push_back( blueLight );
     Lights.push_back( redLight );
@@ -415,7 +429,7 @@ GLfloat *trace(ray *r, int level, GLfloat *weight, int shouldReflect) {
         /* NET COLOR CALCULATION */
         /*************************/
 	for ( int i=0; i<3; i++ ) {
-	    color[i] = ambientLight[i] + diffuseLight[i] + specularLight[i] + reflectionLight[i] + refractionLight[i];
+	    color[i] = ambientLight[i] + diffuseLight[i] + /*specularLight[i] + */reflectionLight[i] + refractionLight[i];
 	}
 	// color[3] = 1.0;
     } else if ( level == 0 ) {
