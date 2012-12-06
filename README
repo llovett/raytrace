@@ -1,7 +1,9 @@
 README - Luke Lovett
 
-My scene is pretty simple right now--- just a few spheres and a couple of
-planes. I'm working on building a room out of the planes: one for the floor, and
-the other for a wall. My ray tracer implements both reflection and refraction.
+My scene is a red "sun" surrounded by a configurable number of green "planets,"
+which are highly reflective and appear to be made out of glass. The far wall is
+a dull brown, while the floor is a green mirror. The program takes quite awhile
+to render the image (on the order of 20 seconds), so be assured that it's not
+entering an infinite loop.
 
 I have adhered to the Honor Code in this assignment.

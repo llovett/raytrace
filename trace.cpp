@@ -187,8 +187,8 @@ void buildScene() {
 			     0, 1, -2,
 			     1, 0, -2);
     GLfloat floorColor[4] = { 0.1, 0.5, 0.2, 1.0 };
-    GLfloat floorAmbient[4] = { 0.2, 0.2, 0.2, 0.2 };
-    GLfloat floorDiffuse[4] = { 0.2, 0.2, 0.2, 0.2 };
+    GLfloat floorAmbient[4] = { 0.0, 0.0, 0.0, 1.0 };
+    GLfloat floorDiffuse[4] = { 0.5, 0.5, 0.5, 1.0 };
     GLfloat floorSpecular[4] = { 0.3, 0.3, 0.3, 1.0 };
     mProps *floorMaterial = buildMaterial(floorColor, floorAmbient, floorDiffuse, floorSpecular, 15, AIR_REFRACTION);
     floor->setMaterial( floorMaterial );
