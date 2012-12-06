@@ -29,6 +29,15 @@
 /* The index-of-refraction of air (which we assume empty space in the scene is filled with)*/
 #define AIR_REFRACTION 1
 
+#define PI 3.14159
+
+/* scene properties */
+#define NUM_SPHERES 10
+#define SPHERE_DIST 3
+#define SUN_X -2
+#define SUN_Y 0
+#define SUN_Z 2
+
 using namespace std;
 
 /* Position of the viewer in word coords */
@@ -37,8 +46,6 @@ GLfloat ViewerPosition[3] = {15.0, 0.0, 1.5};
 GLfloat GridX = 10, GridY = -2, GridZ = 4;
 /* dimensions of the pixel grid. */
 GLfloat GridWidth = 4, GridHeight = 4;
-/* dimensions of the polygon with one vertex at the origin */
-GLfloat PolyWidth = 4, PolyHeight = 4;
 
 /* the bitmap */
 GLfloat image[N][M][3];
@@ -146,46 +153,50 @@ lProps *buildLight(GLfloat ared, GLfloat agreen, GLfloat ablue, GLfloat aalpha,
 void buildScene() {
     /* some objects */
 
-    Sphere *s = new Sphere(2, 0, 2, 1);
     GLfloat color[4] = { 0.5, 1.0, 1.0, 0.5 };
     GLfloat ambient[3] = { 0.0, 0.3, 0.6 };
     GLfloat diffuse[3] = { 0.9, 0.9, 0.9 };
     GLfloat specular[3] = { 1.0, 1.0, 1.0 };
     mProps *diffuseBlueMaterial = buildMaterial(color, ambient, diffuse, specular, 50, 1.333);
-    s->setMaterial( diffuseBlueMaterial );
 
-    Sphere *s2 = new Sphere(0, -4, 2, 1);
-    s2->setMaterial( diffuseBlueMaterial );
+    double inc = 2*PI / NUM_SPHERES;
+    for ( int i = 0; i < NUM_SPHERES; ++i ) {
+	double x = cos(i*inc) * SPHERE_DIST + SUN_X;
+	double y = sin(i*inc) * SPHERE_DIST + SUN_Y;
+	double z = sin(i*inc) * 1.0 + SUN_Z;
 
-    Sphere *s3 = new Sphere(-2, 0, 2, 2);
+	Sphere *s = new Sphere(x, y, z, 0.5);
+	s->setMaterial( diffuseBlueMaterial );
+	Shapes.push_back( s );
+    }
+
+    Sphere *bigRed = new Sphere(SUN_X, SUN_Y, SUN_Z, 2);
     GLfloat color2[4] = { 1.0, 0.8, 0.5, 1.0 };
     GLfloat ambient2[3] = { 0.6, 0.3, 0.0 };
     GLfloat diffuse2[3] = { 0.9, 0.9, 0.9 };
     GLfloat specular2[3] = { 0.8, 0.8, 0.8 };
     mProps *redMaterial = buildMaterial(color2, ambient2, diffuse2, specular2, 10, AIR_REFRACTION);
-    s3->setMaterial( redMaterial );
+    bigRed->setMaterial( redMaterial );
 
     Plane *floor = new Plane(0, 0, -2,
 			     0, 1, -2,
 			     1, 0, -2);
-    GLfloat floorColor[4] = { 0.0, 0.2, 0.1, 1.0 };
+    GLfloat floorColor[4] = { 0.0, 0.4, 0.2, 1.0 };
     GLfloat floorAmbient[4] = { 0.2, 0.2, 0.2, 0.2 };
     GLfloat floorDiffuse[4] = { 0.2, 0.2, 0.2, 0.2 };
     GLfloat floorSpecular[4] = { 0.1, 0.1, 0.1, 1.0 };
     mProps *floorMaterial = buildMaterial(floorColor, floorAmbient, floorDiffuse, floorSpecular, 10, AIR_REFRACTION);
     floor->setMaterial( floorMaterial );
 
-    GLfloat wallColor[4] = { 0.1, 0.2, 0.0, 1.0 };
+    GLfloat wallColor[4] = { 0.2, 0.4, 0.0, 1.0 };
     mProps *wallMaterial = buildMaterial(wallColor, floorAmbient, floorDiffuse, floorSpecular, 10, AIR_REFRACTION);
 
-    Plane *wall = new Plane(-4, 0, 0,
-			    -4, 1, 1,
-			    -4, 1, 0);
+    Plane *wall = new Plane(-5, 0, 0,
+			    -5, 1, 1,
+			    -5, 1, 0);
     wall->setMaterial( wallMaterial );
 
-    Shapes.push_back( s );
-    Shapes.push_back( s2 );
-    Shapes.push_back( s3 );
+    Shapes.push_back( bigRed );
     Shapes.push_back( wall );
     Shapes.push_back( floor );
 
@@ -208,7 +219,7 @@ void buildScene() {
 
 void display() {
     glClear(GL_COLOR_BUFFER_BIT);
-    glRasterPos2i(0, 0);//WIDTH-M/2, HEIGHT-N/2);
+    glRasterPos2i(0, 0);
     // position of the lower left corner
     // of the bitmap in window coords
 
