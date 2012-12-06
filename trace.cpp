@@ -9,6 +9,7 @@
 #include <vector>
 #include <iostream>
 #include <cstdio>
+#include <cstdlib>
 #include <cmath>
 #include "trace.h"
 #include "Sphere.h"
@@ -33,7 +34,7 @@ using namespace std;
 /* Position of the viewer in word coords */
 GLfloat ViewerPosition[3] = {15.0, 0.0, 2.0};
 /* Upper left corner pixel grid */
-GLfloat GridX = 10, GridY = -2, GridZ = 3;
+GLfloat GridX = 10, GridY = -2, GridZ = 4;
 /* dimensions of the pixel grid. */
 GLfloat GridWidth = 4, GridHeight = 4;
 /* dimensions of the polygon with one vertex at the origin */
@@ -169,28 +170,34 @@ void buildScene() {
 			     1, 0, -2);
     GLfloat floorColor[4] = { 1.0, 1.0, 1.0, 1.0 };
     GLfloat floorAmbient[4] = { 0.2, 0.2, 0.2, 0.2 };
-    GLfloat floorDiffuse[4] = { 1.0, 1.0, 1.0, 1.0 };
+    GLfloat floorDiffuse[4] = { 0.2, 0.2, 0.2, 0.2 };
     GLfloat floorSpecular[4] = { 0.1, 0.1, 0.1, 1.0 };
     mProps *floorMaterial = buildMaterial(floorColor, floorAmbient, floorDiffuse, floorSpecular, 10, AIR_REFRACTION);
     floor->setMaterial( floorMaterial );
+
+    Plane *wall = new Plane(-15, 0, 0,
+			    -15, 1, 0,
+			    -15, 0, 1);
+    wall->setMaterial( floorMaterial );
 
     Shapes.push_back( s );
     Shapes.push_back( s2 );
     Shapes.push_back( s3 );
     Shapes.push_back( floor );
+    Shapes.push_back( wall );
 
     /* some lights */
     lProps *blueLight = buildLight(
 	0.2, 0.2, 0.8, 1.0,	/* ambient color */
 	0.2, 0.2, 0.9, 1.0,	/* diffuse color */
 	1.0, 1.0, 1.0, 1.0, 	/* specular color */
-    	-5, 1, 8
+    	2, 0, 10
 	);
     lProps *redLight = buildLight(
     	0.9, 0.2, 0.1, 1.0,	/* ambient color */
     	1.0, 0.2, 0.2, 1.0,	/* diffuse color */
     	1.0, 0.0, 0.0, 1.0, 	/* specular color */
-	-2, -2, -4
+	-2, 5, 4
     	);
     Lights.push_back( blueLight );
     Lights.push_back( redLight );
@@ -449,6 +456,7 @@ GLfloat *trace(ray *r, int level, GLfloat *weight, int shouldReflect) {
 }
 
 void makePicture() {
+    // return;
     // This runs through the pixel grid, makes a ray from the
     // viewer through the pixel, and traces this ray.
     // The pixel gets the color returned by the trace.
@@ -456,15 +464,15 @@ void makePicture() {
     GLfloat *color;
 
     for (i =0; i < N; i++) {
-	for (j = 0; j < M; j++ ) {
-	    ray r;
-	    r.point = new GLfloat[3];
-	    r.direction = new GLfloat[3];
-	    makeRay(i, j, &r);
-	    GLfloat startingWeight[] = { 1.0, 1.0, 1.0 };
-	    color = trace(&r, 0, startingWeight, 1);
-	    copy(color, color+3, image[N-i-1][j]);
-	}
+    	for (j = 0; j < M; j++ ) {
+    	    ray r;
+    	    r.point = new GLfloat[3];
+    	    r.direction = new GLfloat[3];
+    	    makeRay(i, j, &r);
+    	    GLfloat startingWeight[] = { 1.0, 1.0, 1.0 };
+    	    color = trace(&r, 0, startingWeight, 1);
+    	    copy(color, color+2, image[N-i-1][j]);
+    	}
     }
 }
 

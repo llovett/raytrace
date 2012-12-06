@@ -1,4 +1,7 @@
 README - Luke Lovett
 
-Currently, my scene is a single sphere, with ambient, diffuse, and specular
-lighting. I'm in the process of implementing reflections now.
+My scene is pretty simple right now--- just a few spheres and a couple of
+planes. I'm working on building a room out of the planes: one for the floor, and
+the other for a wall. My ray tracer implements both reflection and refraction.
+
+I have adhered to the Honor Code in this assignment.
