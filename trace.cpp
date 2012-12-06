@@ -1,8 +1,12 @@
-/*     trace.cpp  */
-
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
+/**
+ * Trace.cpp
+ *
+ * Ray tracer that renders a scene of a big red "sun" with several green "planets".
+ *
+ * Author: Luke Lovett
+ * Last modified: Thu Dec  6 00:44:41 EST 2012
+ *
+ * */
 
 #include <GL/glut.h>
 #include <algorithm>
@@ -32,16 +36,17 @@
 #define PI 3.14159
 
 /* scene properties */
-#define NUM_SPHERES 10
+#define NUM_SPHERES 12
+#define SPHERE_SIZE 0.35
 #define SPHERE_DIST 3
 #define SUN_X -2
-#define SUN_Y 0
-#define SUN_Z 2
+#define SUN_Y -1
+#define SUN_Z 1.0
 
 using namespace std;
 
 /* Position of the viewer in word coords */
-GLfloat ViewerPosition[3] = {15.0, 0.0, 1.5};
+GLfloat ViewerPosition[3] = {15.0, 0.0, 2.5};
 /* Upper left corner pixel grid */
 GLfloat GridX = 10, GridY = -2, GridZ = 4;
 /* dimensions of the pixel grid. */
@@ -165,7 +170,7 @@ void buildScene() {
 	double y = sin(i*inc) * SPHERE_DIST + SUN_Y;
 	double z = sin(i*inc) * 1.0 + SUN_Z;
 
-	Sphere *s = new Sphere(x, y, z, 0.5);
+	Sphere *s = new Sphere(x, y, z, SPHERE_SIZE);
 	s->setMaterial( diffuseBlueMaterial );
 	Shapes.push_back( s );
     }
@@ -181,19 +186,20 @@ void buildScene() {
     Plane *floor = new Plane(0, 0, -2,
 			     0, 1, -2,
 			     1, 0, -2);
-    GLfloat floorColor[4] = { 0.0, 0.4, 0.2, 1.0 };
+    GLfloat floorColor[4] = { 0.1, 0.5, 0.2, 1.0 };
     GLfloat floorAmbient[4] = { 0.2, 0.2, 0.2, 0.2 };
     GLfloat floorDiffuse[4] = { 0.2, 0.2, 0.2, 0.2 };
-    GLfloat floorSpecular[4] = { 0.1, 0.1, 0.1, 1.0 };
-    mProps *floorMaterial = buildMaterial(floorColor, floorAmbient, floorDiffuse, floorSpecular, 10, AIR_REFRACTION);
+    GLfloat floorSpecular[4] = { 0.3, 0.3, 0.3, 1.0 };
+    mProps *floorMaterial = buildMaterial(floorColor, floorAmbient, floorDiffuse, floorSpecular, 15, AIR_REFRACTION);
     floor->setMaterial( floorMaterial );
 
-    GLfloat wallColor[4] = { 0.2, 0.4, 0.0, 1.0 };
-    mProps *wallMaterial = buildMaterial(wallColor, floorAmbient, floorDiffuse, floorSpecular, 10, AIR_REFRACTION);
+    GLfloat wallColor[4] = { 0.3, 0.6, 0.0, 1.0 };
+    GLfloat wallSpecular[4] = { 0.0, 0.0, 0.0, 1.0 };
+    mProps *wallMaterial = buildMaterial(wallColor, floorAmbient, floorDiffuse, wallSpecular, 0, AIR_REFRACTION);
 
-    Plane *wall = new Plane(-5, 0, 0,
-			    -5, 1, 1,
-			    -5, 1, 0);
+    Plane *wall = new Plane(-7, 0, 0,
+			    -7, 1, 1,
+			    -7, 1, 0);
     wall->setMaterial( wallMaterial );
 
     Shapes.push_back( bigRed );
@@ -495,7 +501,7 @@ int main(int argc, char** argv) {
     makePicture();
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-    glutInitWindowSize(600, 600);
+    glutInitWindowSize(WIDTH, HEIGHT);
     glutInitWindowPosition(0, 0);
     glutCreateWindow("Ray Traced Image");
     glutReshapeFunc(reshape);
